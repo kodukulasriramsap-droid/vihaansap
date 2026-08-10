@@ -9,8 +9,27 @@ const compression = require('compression');
 // Middleware
 app.use(helmet());
 app.use(compression());
+const defaultOrigins = [
+  'https://vihaansap-git-main-vihaan19.vercel.app',
+  'https://vihaansap-gray.vercel.app',
+  'https://www.srivihaanconsulting.com',
+  'https://srivihaanconsulting.com'
+];
+
+const envOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim()) 
+  : [];
+
+const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://vihaansap.vercel.app',
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
