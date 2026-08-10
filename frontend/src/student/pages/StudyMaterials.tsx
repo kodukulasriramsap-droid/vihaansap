@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDB } from '../../hooks/useDB';
 import { FileText, Download, ExternalLink, Calendar } from 'lucide-react';
 import { downloadFile } from '../../utils/downloadFile';
 import { useActiveBatch } from '../contexts/ActiveBatchContext';
 import { isTargetedToStudent } from '../../utils/recipientTargeting';
+import { markContentRead } from '../../utils/contentReadState';
 
 export default function StudyMaterials() {
   const { studentProfile } = useAuth();
@@ -14,6 +15,12 @@ export default function StudyMaterials() {
   const studyMaterials = db.studyMaterials?.filter(m => 
     m.batchId === activeBatch?.id && m.visibility !== 'Hidden' && isTargetedToStudent(m, studentProfile)
   ).sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()) || [];
+
+  useEffect(() => {
+    if (studyMaterials.length > 0) {
+      markContentRead(studyMaterials.map(m => m.id), studentProfile, 'materials');
+    }
+  }, [studyMaterials, studentProfile]);
 
   return (
     <div className="p-4 sm:p-8 space-y-6 max-w-5xl">

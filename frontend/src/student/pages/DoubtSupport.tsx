@@ -4,6 +4,7 @@ import { useDB } from '../../hooks/useDB';
 import { HelpCircle, Plus, X, Send, Clock, CheckCircle, AlertCircle, MessageCircle } from 'lucide-react';
 import { MockDB } from '../../services/MockDB';
 import { useActiveBatch } from '../contexts/ActiveBatchContext';
+import { markContentRead } from '../../utils/contentReadState';
 
 const PRIORITY_COLORS: Record<string, string> = {
   High: 'bg-red-100 text-red-700',
@@ -58,6 +59,17 @@ export default function DoubtSupport() {
     const refreshed = db.doubts?.find((d: any) => d.id === selectedDoubt.id);
     if (refreshed) setSelectedDoubt(refreshed);
   }, [db.doubts, selectedDoubt?.id]);
+
+  useEffect(() => {
+    // Collect all doubt replies from Admin/Mentor
+    const repliesToMark = (db.doubtReplies || [])
+      .filter((r: any) => myDoubts.map((d: any) => d.id).includes(r.doubtId) && r.role !== 'Student')
+      .map((r: any) => r.id);
+    
+    if (repliesToMark.length > 0) {
+      markContentRead(repliesToMark, studentProfile, 'doubts');
+    }
+  }, [db.doubtReplies, myDoubts, studentProfile]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

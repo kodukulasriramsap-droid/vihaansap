@@ -30,15 +30,37 @@ service cloud.firestore {
         get(/databases/$(database)/documents/batches/$(batchId)).data.studentIds;
     }
 
+    // ─── Batch historical content logic ───────────────────────────────────────
+    function getContentDate() {
+      return ('uploadDate' in resource.data) ? resource.data.uploadDate :
+             ('createdAt' in resource.data) ? resource.data.createdAt :
+             ('date' in resource.data) ? resource.data.date :
+             '';
+    }
+
+    function isHistoricallyEligible(batchId) {
+      let studentData = get(/databases/$(database)/documents/students/$(request.auth.uid)).data;
+      let hasGrant = ('grantedHistoricalBatches' in studentData) && (batchId in studentData.grantedHistoricalBatches);
+      let joinDate = ('batchJoinDates' in studentData && batchId in studentData.batchJoinDates)
+                     ? studentData.batchJoinDates[batchId]
+                     : '';
+      // If legacy (no join date recorded), or explicitly granted, or content is newer than join date
+      return joinDate == '' || hasGrant || getContentDate() >= joinDate;
+    }
+
     // Returns true if the content targets the current user (either all-batch or selected)
     function isBatchContentVisibleToMe(batchId) {
       return isEnrolledInBatch(batchId) && (
-        resource.data.recipientMode == 'all' ||
-        resource.data.recipientType == 'all' ||
-        resource.data.visibility == 'Students' ||
-        resource.data.visibility == 'Everyone' ||
-        (!('recipientMode' in resource.data) && !('recipientType' in resource.data) && !('visibility' in resource.data)) ||
-        request.auth.uid in resource.data.recipientIds
+        request.auth.uid in resource.data.recipientIds ||
+        (
+          (
+            resource.data.recipientMode == 'all' ||
+            resource.data.recipientType == 'all' ||
+            resource.data.visibility == 'Students' ||
+            resource.data.visibility == 'Everyone' ||
+            (!('recipientMode' in resource.data) && !('recipientType' in resource.data) && !('visibility' in resource.data))
+          ) && isHistoricallyEligible(batchId)
+        )
       );
     }
 

@@ -4,6 +4,10 @@ export type RecipientTarget = {
   recipientMode?: 'all' | 'selected'; // legacy field
   recipientIds?: string[];
   visibilitySettings?: { mode?: string; studentIds?: string[] };
+  batchId?: string;
+  uploadDate?: string;
+  createdAt?: string;
+  date?: string;
 };
 
 export const studentIdentifiers = (student: any) =>
@@ -18,7 +22,20 @@ export const isTargetedToStudent = (item: RecipientTarget, student: any) => {
   if (item.visibilitySettings?.mode === 'Selected') {
     return studentIdentifiers(student).some(id => (item.visibilitySettings?.studentIds || []).includes(id));
   }
-  return true; // legacy documents remain visible to their batch
+  
+  // Historical Grant Logic for 'all' mode
+  const batchId = item.batchId;
+  const contentDate = item.uploadDate || item.createdAt || item.date || '';
+  
+  const hasGrant = batchId && student.grantedHistoricalBatches?.includes(batchId);
+  const joinDate = (batchId && student.batchJoinDates && student.batchJoinDates[batchId]) || '';
+  
+  // If legacy (no join date recorded), or explicitly granted, or content is newer than join date
+  if (joinDate === '' || hasGrant || (contentDate && contentDate >= joinDate)) {
+      return true;
+  }
+  
+  return false;
 };
 
 export const enrolledStudentsForBatch = (batch: any, students: any[]) =>

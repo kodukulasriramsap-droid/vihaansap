@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDB } from '../../hooks/useDB';
 import { PlayCircle, Calendar } from 'lucide-react';
 import { isTargetedToStudent } from '../../utils/recipientTargeting';
 import { useActiveBatch } from '../contexts/ActiveBatchContext';
+import { markContentRead } from '../../utils/contentReadState';
 
 export default function RecordedClasses() {
   const { studentProfile } = useAuth();
@@ -29,11 +30,18 @@ export default function RecordedClasses() {
     topic: r.title,
     date: r.date || r.uploadDate,
     batchId: r.batchId,
-    recordingUrl: r.videoUrl
+    recordingUrl: r.videoUrl,
+    thumbnail: r.thumbnail
   })) || [];
 
   const recordedSessions = [...sessionRecordings, ...standaloneRecordings]
     .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+
+  useEffect(() => {
+    if (recordedSessions.length > 0) {
+      markContentRead(recordedSessions.map(r => r.id), studentProfile, 'recordings');
+    }
+  }, [recordedSessions, studentProfile]);
 
   return (
     <div className="p-4 sm:p-8 space-y-6 max-w-6xl">
@@ -51,11 +59,17 @@ export default function RecordedClasses() {
           {recordedSessions.map(rec => {
             const batch = db.batches.find(b => b.id === rec.batchId);
             return (
-            <a href={rec.recordingUrl} target="_blank" rel="noreferrer" key={rec.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
-              <div className="aspect-video bg-slate-100 relative overflow-hidden flex items-center justify-center">
-                <PlayCircle className="w-12 h-12 text-slate-300 group-hover:text-[#1763B6] transition-colors z-10 relative" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
+              <a href={rec.recordingUrl} target="_blank" rel="noreferrer" key={rec.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
+                <div className="aspect-video bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                  {(rec as any).thumbnail ? (
+                    <img src={(rec as any).thumbnail} alt={rec.topic} className="w-full h-full object-cover" />
+                  ) : (
+                    <PlayCircle className="w-12 h-12 text-slate-300 group-hover:text-[#1763B6] transition-colors z-10 relative" />
+                  )}
+                  <div className={`absolute inset-0 bg-gradient-to-t ${ (rec as any).thumbnail ? 'from-black/60' : 'from-black/20' } to-transparent flex items-end justify-start p-4`}>
+                    {(rec as any).thumbnail && <PlayCircle className="w-10 h-10 text-white/80 group-hover:text-white transition-colors" />}
+                  </div>
+                </div>
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#1763B6] bg-blue-50 px-2 py-1 rounded-md">

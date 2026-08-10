@@ -10,6 +10,8 @@ export interface Student {
   status: 'Active' | 'Inactive' | 'Graduated';
   joinDate: string;
   lastLogin?: string;
+  batchJoinDates?: Record<string, string>;
+  grantedHistoricalBatches?: string[];
 }
 
 export interface StudentReview {

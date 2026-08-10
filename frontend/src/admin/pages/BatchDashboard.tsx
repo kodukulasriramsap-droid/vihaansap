@@ -31,6 +31,10 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
   const [recipientType, setRecipientType] = useState<'all' | 'selected'>('all');
   const [recipientIds, setRecipientIds] = useState<string[]>([]);
 
+  const toggleStudent = (uid: string) => {
+    setRecipientIds(ids => ids.includes(uid) ? ids.filter(id => id !== uid) : [...ids, uid]);
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (editing) {
@@ -92,7 +96,32 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Visibility</label>
               <label className="mr-5 text-sm"><input type="radio" checked={recipientType === 'all'} onChange={() => setRecipientType('all')} /> All Students in Batch</label>
               <label className="text-sm"><input type="radio" checked={recipientType === 'selected'} onChange={() => setRecipientType('selected')} /> Selected Students</label>
-              {recipientType === 'selected' && <div className="mt-3 max-h-40 overflow-auto rounded-lg border bg-white p-3 space-y-2">{students.map(s => <label key={s.id} className="block text-sm"><input type="checkbox" checked={recipientIds.includes(s.id)} onChange={() => setRecipientIds(ids => ids.includes(s.id) ? ids.filter(id => id !== s.id) : [...ids, s.id])} /> {s.name || s.email}</label>)}</div>}
+              {recipientType === 'selected' && (
+                <div className="mt-3 max-h-40 overflow-auto rounded-lg border bg-white p-3 space-y-2">
+                  {students.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
+                  {students.length > 0 && (
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2">
+                      <input
+                        type="checkbox"
+                        checked={recipientIds.length === students.length && students.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) setRecipientIds(students.map(s => s.uid || s.id));
+                          else setRecipientIds([]);
+                        }}
+                      />
+                      Select All Students
+                    </label>
+                  )}
+                  {students.map(s => {
+                    const uid = s.uid || s.id;
+                    return (
+                      <label key={s.id} className="block text-sm">
+                        <input type="checkbox" checked={recipientIds.includes(uid)} onChange={() => toggleStudent(uid)} /> {s.name || s.email}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-2">
@@ -876,15 +905,32 @@ function ReviewsFeedbackTab({ batchId }: { batchId: string }) {
                 </div>
                 {newCampaign.target === 'selected' && (
                   <div className="border rounded-lg p-2 max-h-40 overflow-y-auto space-y-1 bg-slate-50">
-                    {activeStudents.map(s => (
-                      <label key={s.id} className="flex items-center gap-2 text-sm text-slate-700 p-1 hover:bg-slate-100 rounded cursor-pointer">
-                        <input type="checkbox" checked={newCampaign.selectedIds.includes(s.id)} onChange={(e) => {
-                          if (e.target.checked) setNewCampaign({...newCampaign, selectedIds: [...newCampaign.selectedIds, s.id]});
-                          else setNewCampaign({...newCampaign, selectedIds: newCampaign.selectedIds.filter(id => id !== s.id)});
-                        }}/>
-                        {s.name} ({s.email})
+                    {activeStudents.length === 0 && <p className="text-sm text-slate-400 p-2">No active students.</p>}
+                    {activeStudents.length > 0 && (
+                      <label className="flex items-center gap-2 text-sm font-bold text-slate-800 p-1 border-b border-slate-200 mb-2 cursor-pointer hover:bg-slate-100 rounded">
+                        <input 
+                          type="checkbox" 
+                          checked={newCampaign.selectedIds.length === activeStudents.length} 
+                          onChange={(e) => {
+                            if (e.target.checked) setNewCampaign({...newCampaign, selectedIds: activeStudents.map(s => s.uid || s.id)});
+                            else setNewCampaign({...newCampaign, selectedIds: []});
+                          }}
+                        />
+                        Select All Students
                       </label>
-                    ))}
+                    )}
+                    {activeStudents.map(s => {
+                      const uid = s.uid || s.id;
+                      return (
+                        <label key={s.id} className="flex items-center gap-2 text-sm text-slate-700 p-1 hover:bg-slate-100 rounded cursor-pointer">
+                          <input type="checkbox" checked={newCampaign.selectedIds.includes(uid)} onChange={(e) => {
+                            if (e.target.checked) setNewCampaign({...newCampaign, selectedIds: [...newCampaign.selectedIds, uid]});
+                            else setNewCampaign({...newCampaign, selectedIds: newCampaign.selectedIds.filter(id => id !== uid)});
+                          }}/>
+                          {s.name} ({s.email})
+                        </label>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -990,12 +1036,30 @@ function LiveClassesTab({ batchId }: { batchId: string }) {
               {recipientMode === 'selected' && (
                 <div className="mt-3 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
                   {enrolledStudents.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
-                  {enrolledStudents.map(s => (
+                  {enrolledStudents.length > 0 && (
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedStudentIds.length === enrolledStudents.length} 
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedStudentIds(enrolledStudents.map(s => s.uid || s.id));
+                          } else {
+                            setSelectedStudentIds([]);
+                          }
+                        }} 
+                      />
+                      Select All Students
+                    </label>
+                  )}
+                  {enrolledStudents.map(s => {
+                    const uid = s.uid || s.id;
+                    return (
                     <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                      <input type="checkbox" checked={selectedStudentIds.includes(s.id)} onChange={() => toggleStudent(s.id)} />
+                      <input type="checkbox" checked={selectedStudentIds.includes(uid)} onChange={() => toggleStudent(uid)} />
                       {s.name} <span className="text-slate-400 text-xs">({s.email})</span>
                     </label>
-                  ))}
+                  );})}
                 </div>
               )}
             </div>
@@ -1146,12 +1210,30 @@ function StudyMaterialsTab({ batchId }: { batchId: string }) {
               {recipientMode === 'selected' && (
                 <div className="mt-3 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
                   {enrolledStudents.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
-                  {enrolledStudents.map(s => (
+                  {enrolledStudents.length > 0 && (
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedStudentIds.length === enrolledStudents.length} 
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedStudentIds(enrolledStudents.map(s => s.uid || s.id));
+                          } else {
+                            setSelectedStudentIds([]);
+                          }
+                        }} 
+                      />
+                      Select All Students
+                    </label>
+                  )}
+                  {enrolledStudents.map(s => {
+                    const uid = s.uid || s.id;
+                    return (
                     <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                      <input type="checkbox" checked={selectedStudentIds.includes(s.id)} onChange={() => toggleStudent(s.id)} />
+                      <input type="checkbox" checked={selectedStudentIds.includes(uid)} onChange={() => toggleStudent(uid)} />
                       {s.name} <span className="text-slate-400 text-xs">({s.email})</span>
                     </label>
-                  ))}
+                  );})}
                 </div>
               )}
             </div>
@@ -1520,12 +1602,30 @@ function RecordingsTab({ batchId }: { batchId: string }) {
               {recipientMode === 'selected' && (
                 <div className="mt-3 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
                   {enrolledStudents.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
-                  {enrolledStudents.map(s => (
+                  {enrolledStudents.length > 0 && (
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedStudentIds.length === enrolledStudents.length} 
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedStudentIds(enrolledStudents.map(s => s.uid || s.id));
+                          } else {
+                            setSelectedStudentIds([]);
+                          }
+                        }} 
+                      />
+                      Select All Students
+                    </label>
+                  )}
+                  {enrolledStudents.map(s => {
+                    const uid = s.uid || s.id;
+                    return (
                     <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                      <input type="checkbox" checked={selectedStudentIds.includes(s.id)} onChange={() => toggleStudent(s.id)} />
+                      <input type="checkbox" checked={selectedStudentIds.includes(uid)} onChange={() => toggleStudent(uid)} />
                       {s.name} <span className="text-slate-400 text-xs">({s.email})</span>
                     </label>
-                  ))}
+                  );})}
                 </div>
               )}
             </div>
@@ -1670,12 +1770,30 @@ function NotificationsTab({ batchId }: { batchId: string }) {
               {recipientMode === 'selected' && (
                 <div className="mt-3 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
                   {enrolledStudents.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
-                  {enrolledStudents.map(s => (
+                  {enrolledStudents.length > 0 && (
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedStudentIds.length === enrolledStudents.length} 
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedStudentIds(enrolledStudents.map(s => s.uid || s.id));
+                          } else {
+                            setSelectedStudentIds([]);
+                          }
+                        }} 
+                      />
+                      Select All Students
+                    </label>
+                  )}
+                  {enrolledStudents.map(s => {
+                    const uid = s.uid || s.id;
+                    return (
                     <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                      <input type="checkbox" checked={selectedStudentIds.includes(s.id)} onChange={() => toggleStudent(s.id)} />
+                      <input type="checkbox" checked={selectedStudentIds.includes(uid)} onChange={() => toggleStudent(uid)} />
                       {s.name} <span className="text-slate-400 text-xs">({s.email})</span>
                     </label>
-                  ))}
+                  );})}
                 </div>
               )}
             </div>

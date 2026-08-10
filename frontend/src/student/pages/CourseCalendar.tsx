@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { CalendarDays, ChevronDown, ChevronRight } from 'lucide-react';
 import { useDB } from '../../hooks/useDB';
 import { useActiveBatch } from '../contexts/ActiveBatchContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { markContentRead } from '../../utils/contentReadState';
+import { isTargetedToStudent } from '../../utils/recipientTargeting';
 
 /** Read-only view of the Admin Batch Course Calendar's existing syllabus/session data. */
 export default function CourseCalendar() {
@@ -10,11 +13,20 @@ export default function CourseCalendar() {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const course = db.courses.find(item => item.name === activeBatch?.course);
   const syllabus: string[] = course?.syllabus || [];
-  const sessions = (db.batchSessions || []).filter(session => session.batchId === activeBatch?.id);
+  const { studentProfile } = useAuth();
+  
+  const sessions = (db.batchSessions || []).filter(session => session.batchId === activeBatch?.id && isTargetedToStudent(session, studentProfile));
   const calendarItems = syllabus.map((topic, syllabusIndex) => {
     const session = sessions.find(item => item.syllabusIndex === syllabusIndex);
-    return { topic, syllabusIndex, date: session?.date || '', time: session?.time || '', status: session?.status || 'Upcoming', subTopics: session?.subTopics || [] };
+    return { id: session?.id, topic, syllabusIndex, date: session?.date || '', time: session?.time || '', status: session?.status || 'Upcoming', subTopics: session?.subTopics || [] };
   });
+
+  React.useEffect(() => {
+    const sessionIds = calendarItems.map(item => item.id).filter(Boolean);
+    if (sessionIds.length > 0) {
+      markContentRead(sessionIds, studentProfile, 'sessions');
+    }
+  }, [calendarItems, studentProfile]);
 
   return <div className="p-4 sm:p-8 space-y-6 max-w-5xl">
     <div>

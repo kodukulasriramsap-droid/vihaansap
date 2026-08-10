@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, MoreVertical, X, CheckCircle, Ban } from 'lucide-react';
+import { Search, MoreVertical, X, CheckCircle, Ban, History } from 'lucide-react';
 import { useDB } from '../../hooks/useDB';
 import { MockDB } from '../../services/MockDB';
 import { FirestoreDBService }
@@ -74,8 +74,6 @@ export default function Students() {
     
     return matchesSearch && matchesCourse && matchesBatch && matchesStatus && matchesBg;
   }).sort((a: any, b: any) => {
-    const loginDiff = timestampValue(b.lastLogin) - timestampValue(a.lastLogin);
-    if (loginDiff) return loginDiff;
     return timestampValue(b.createdAt || b.joinedAt || b.date) - timestampValue(a.createdAt || a.joinedAt || a.date);
   }), [db.students, searchTerm, filterCourse, filterBatch, filterStatus, filterBackground]);
 
@@ -115,11 +113,34 @@ export default function Students() {
 
   const handleSaveChanges = async () => {
     if (!selectedStudent) return;
-    const updatePayload = {
+    
+    // We need to determine the target batch ID to save the join date
+    const currentDB = MockDB.get();
+    const targetBatch = currentDB.batches.find((b: any) => b.name === editBatch);
+    
+    let updatedBatchJoinDates = selectedStudent.batchJoinDates || {};
+    let isNewBatch = false;
+    
+    if (targetBatch) {
+      const studentIds = targetBatch.studentIds || [];
+      if (!studentIds.includes(selectedStudent.id)) {
+        isNewBatch = true;
+        updatedBatchJoinDates = {
+          ...updatedBatchJoinDates,
+          [targetBatch.id]: new Date().toISOString()
+        };
+      }
+    }
+
+    const updatePayload: any = {
       course: editCourse,
       batch: editBatch,
       courseStatus: editCourseStatus,
     };
+    
+    if (isNewBatch) {
+      updatePayload.batchJoinDates = updatedBatchJoinDates;
+    }
 
     await MockDB.updateItem('students', selectedStudent.id, updatePayload);
 
@@ -129,16 +150,12 @@ export default function Students() {
     }
 
     // Update Batch to include student
-    const currentDB = MockDB.get();
-    const targetBatch = currentDB.batches.find((b: any) => b.name === editBatch);
-    if (targetBatch) {
+    if (targetBatch && isNewBatch) {
       const studentIds = targetBatch.studentIds || [];
-      if (!studentIds.includes(selectedStudent.id)) {
-        MockDB.updateItem('batches', targetBatch.id, {
-          studentIds: [...studentIds, selectedStudent.id],
-        });
-        FirestoreDBService.upsert('batches', targetBatch.id, { studentIds: [...studentIds, selectedStudent.id] }).catch(console.error);
-      }
+      MockDB.updateItem('batches', targetBatch.id, {
+        studentIds: [...studentIds, selectedStudent.id],
+      });
+      FirestoreDBService.upsert('batches', targetBatch.id, { studentIds: [...studentIds, selectedStudent.id] }).catch(console.error);
     }
 
     // Remove from old batch if it changed
@@ -226,7 +243,7 @@ export default function Students() {
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Course/Batch</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Last Login</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Joined</th>
                   <th className="px-6 py-4 text-right"></th>
                 </tr>
               </thead>
@@ -234,6 +251,7 @@ export default function Students() {
                 {filteredStudents.length === 0 && (
                   <tr><td colSpan={6} className="p-8 text-center text-slate-500">No students found matching filters.</td></tr>
                 )}
+
                 {filteredStudents.map(student => (
                   <tr 
                     key={student.id} 
@@ -270,7 +288,7 @@ export default function Students() {
                       <p className="text-sm font-medium text-slate-800">{student.course}</p>
                       <p className="text-xs text-slate-500">{student.batch}</p>
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-500">{timestampValue(student.lastLogin) ? new Date(timestampValue(student.lastLogin)).toLocaleString() : 'Never logged in'}</td>
+                    <td className="px-6 py-4 text-xs text-slate-500">{timestampValue(student.createdAt || student.joinedAt || student.date) ? new Date(timestampValue(student.createdAt || student.joinedAt || student.date)).toLocaleDateString() : student.joinDate || '—'}</td>
                     <td className="px-6 py-4 text-right">
                       <button className="text-slate-400 hover:text-slate-600">
                         <MoreVertical className="w-5 h-5" />
@@ -387,6 +405,38 @@ export default function Students() {
                   <button onClick={() => handleUpdateStatus(selectedStudent.id, 'Rejected')} className="col-span-2 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-sm font-semibold transition-colors">
                     Reject Student
                   </button>
+                  
+                  {editBatch && (
+                    <button 
+                      onClick={async () => {
+                        const targetBatch = db.batches.find((b: any) => b.name === editBatch);
+                        if (!targetBatch) return;
+                        
+                        const alreadyGranted = selectedStudent.grantedHistoricalBatches?.includes(targetBatch.id);
+                        if (alreadyGranted) {
+                          alert('This student already has historical access to this batch.');
+                          return;
+                        }
+
+                        if (!window.confirm("Grant previous batch content to this student?\nThis will make eligible previous batch materials, recordings, notifications, sessions and assignments available to the student.")) {
+                          return;
+                        }
+                        
+                        const newGranted = [...(selectedStudent.grantedHistoricalBatches || []), targetBatch.id];
+                        
+                        await MockDB.updateItem('students', selectedStudent.id, { grantedHistoricalBatches: newGranted });
+                        if (selectedStudent.uid) {
+                          FirestoreStudentService.updateStudent(selectedStudent.uid, { grantedHistoricalBatches: newGranted }).catch(console.error);
+                        }
+                        
+                        setSelectedStudent({ ...selectedStudent, grantedHistoricalBatches: newGranted });
+                        alert('Historical batch content granted successfully.');
+                      }}
+                      className="col-span-2 flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    >
+                      <History className="w-4 h-4" /> Grant Previous Batch Content
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
