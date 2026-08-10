@@ -1,0 +1,17 @@
+<!-- 
+  FOOTER LOGO
+  ─────────────────────────────
+  Replace this file with your actual footer logo.
+  
+  Recommended Image Size : 320 × 90 px
+  Display Size           : 210 × 60 px (controlled by CSS)
+  Format                 : PNG with transparent background (white text version recommended)
+  Max File Size          : 300 KB
+  
+  Place your file at: src/assets/branding/footer-logo.png
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="90" viewBox="0 0 320 90">
+  <rect width="320" height="90" fill="transparent"/>
+  <text x="50%" y="38" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="white" letter-spacing="2">SRI VIHAAN</text>
+  <text x="50%" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="600" fill="#F4A62A" letter-spacing="6">CONSULTING</text>
+</svg>
