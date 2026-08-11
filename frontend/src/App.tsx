@@ -184,6 +184,7 @@ export default function App() {
         <Route path="/mentor" element={<MentorLayout />}>
           <Route path="dashboard" element={<MentorDashboard />} />
           <Route path="batches/:batchId" element={<MentorBatch />} />
+          <Route path="batches/:batchId/*" element={<MentorBatch />} />
         </Route>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
