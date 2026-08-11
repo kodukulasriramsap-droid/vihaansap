@@ -1479,8 +1479,8 @@ function RecordingsTab({ batchId }: { batchId: string }) {
         try {
           await MockDB.updateItem('recordings', editing.id, recData);
         } catch (error) {
-          console.error('Unable to save recording thumbnail:', error);
-          setSaveError('The thumbnail was uploaded, but the recording could not be saved. Please retry.');
+          console.error('Unable to save recording:', error);
+          setSaveError('The recording could not be saved. Please retry.');
           return;
         }
       } else {
@@ -1489,8 +1489,7 @@ function RecordingsTab({ batchId }: { batchId: string }) {
           ...recData,
           courseName: batchObj?.course || '',
           uploadDate: new Date().toISOString().split('T')[0],
-          visibility: editing.visibility || 'Students',
-          thumbnail: editing.thumbnail || '/assets/course-default.png'
+          visibility: editing.visibility || 'Students'
         };
         try {
           await MockDB.addItem('recordings', newRec);
@@ -1576,18 +1575,6 @@ function RecordingsTab({ batchId }: { batchId: string }) {
               <input required type="text" value={editing.videoUrl || ''} onChange={e => setEditing({...editing, videoUrl: e.target.value})} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div className="col-span-2">
-              <ImageUploader
-                label="Recording Thumbnail (optional)"
-                value={editing.thumbnail || ''}
-                onChange={(url) => setEditing({...editing, thumbnail: url})}
-                folder="recordings"
-                maxDimension={1200}
-                recommendedSize="1200 × 675 px"
-                recommendedFormat="PNG, JPG, WEBP"
-                previewClassName="w-full h-28 object-cover rounded"
-              />
-            </div>
-            <div className="col-span-2">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Recipients</label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -1650,7 +1637,6 @@ function RecordingsTab({ batchId }: { batchId: string }) {
             <table className="w-full text-left">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-16">Thumb</th>
                   <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Title</th>
                   <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Date</th>
                   <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Source</th>
@@ -1661,14 +1647,6 @@ function RecordingsTab({ batchId }: { batchId: string }) {
               <tbody className="divide-y divide-slate-100">
                 {recordings.map(rec => (
                   <tr key={rec.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="w-16 h-10 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
-                        {rec.thumbnail
-                          ? <img src={rec.thumbnail} alt={rec.title} className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
-                          : <div className="w-full h-full flex items-center justify-center"><PlayCircle className="w-5 h-5 text-slate-400" /></div>
-                        }
-                      </div>
-                    </td>
                     <td className="px-4 py-3">
                       <div>
                         <div className="flex items-center gap-2">

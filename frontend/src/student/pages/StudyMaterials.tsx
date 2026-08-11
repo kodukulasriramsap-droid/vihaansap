@@ -73,8 +73,8 @@ export default function StudyMaterials() {
                       onClick={() => downloadFile(mat.url, mat.fileName || mat.title)}
                       className="w-full sm:w-auto px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 hover:text-[#1763B6] text-slate-700 text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors shrink-0 shadow-sm"
                     >
-                      <Download className="w-4 h-4" />
-                      Download
+                      <ExternalLink className="w-4 h-4" />
+                      Open
                     </button>
                   )}
               </div>

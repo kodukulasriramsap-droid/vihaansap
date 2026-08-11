@@ -30,8 +30,7 @@ export default function RecordedClasses() {
     topic: r.title,
     date: r.date || r.uploadDate,
     batchId: r.batchId,
-    recordingUrl: r.videoUrl,
-    thumbnail: r.thumbnail
+    recordingUrl: r.videoUrl
   })) || [];
 
   const recordedSessions = [...sessionRecordings, ...standaloneRecordings]
@@ -55,36 +54,33 @@ export default function RecordedClasses() {
           {activeBatch ? 'No recordings available for this batch yet.' : 'No active batch assigned yet.'}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
           {recordedSessions.map(rec => {
             const batch = db.batches.find(b => b.id === rec.batchId);
             return (
-              <a href={rec.recordingUrl} target="_blank" rel="noreferrer" key={rec.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
-                <div className="aspect-video bg-slate-100 relative overflow-hidden flex items-center justify-center">
-                  {(rec as any).thumbnail ? (
-                    <img src={(rec as any).thumbnail} alt={rec.topic} className="w-full h-full object-cover" />
-                  ) : (
-                    <PlayCircle className="w-12 h-12 text-slate-300 group-hover:text-[#1763B6] transition-colors z-10 relative" />
-                  )}
-                  <div className={`absolute inset-0 bg-gradient-to-t ${ (rec as any).thumbnail ? 'from-black/60' : 'from-black/20' } to-transparent flex items-end justify-start p-4`}>
-                    {(rec as any).thumbnail && <PlayCircle className="w-10 h-10 text-white/80 group-hover:text-white transition-colors" />}
+              <div key={rec.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
+                <div className="flex-1">
+                  <h3 className="font-bold text-slate-800 text-sm md:text-base leading-tight">{rec.topic}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#1763B6] bg-blue-50 px-2 py-0.5 rounded">
+                      {batch?.course}
+                    </span>
+                    <span className="text-xs text-slate-500">{rec.date}</span>
                   </div>
                 </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#1763B6] bg-blue-50 px-2 py-1 rounded-md">
-                    {batch?.course}
-                  </span>
-                  <div className="flex items-center gap-1 text-xs font-semibold text-slate-500">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {rec.date}
-                  </div>
+                <div className="ml-4 flex-shrink-0">
+                  <a 
+                    href={rec.recordingUrl} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="flex items-center gap-1.5 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg font-bold text-sm transition-colors shadow-sm"
+                  >
+                    <PlayCircle className="w-4 h-4" /> Watch
+                  </a>
                 </div>
-                <h3 className="font-bold text-slate-800 leading-tight mb-1">{rec.topic}</h3>
-                <p className="text-xs text-slate-500">Batch: {batch?.name}</p>
               </div>
-            </a>
-          )})}
+            );
+          })}
         </div>
       )}
     </div>
