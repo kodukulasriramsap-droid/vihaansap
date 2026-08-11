@@ -54,28 +54,26 @@ export default function RecordedClasses() {
           {activeBatch ? 'No recordings available for this batch yet.' : 'No active batch assigned yet.'}
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
-          {recordedSessions.map(rec => {
+        <div className="bg-white border border-slate-100 rounded-xl overflow-hidden">
+          {recordedSessions.map((rec, index) => {
             const batch = db.batches.find(b => b.id === rec.batchId);
             return (
-              <div key={rec.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
-                <div className="flex-1">
-                  <h3 className="font-bold text-slate-800 text-sm md:text-base leading-tight">{rec.topic}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#1763B6] bg-blue-50 px-2 py-0.5 rounded">
-                      {batch?.course}
-                    </span>
-                    <span className="text-xs text-slate-500">{rec.date}</span>
-                  </div>
+              <div key={rec.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-slate-50/80 transition-colors gap-2 sm:gap-4 ${index !== recordedSessions.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-slate-800 text-sm truncate">{rec.topic}</h3>
                 </div>
-                <div className="ml-4 flex-shrink-0">
+                <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-8 shrink-0">
+                  <div className="flex items-center gap-4 sm:gap-8 text-xs text-slate-500">
+                    <span className="w-auto sm:w-32 truncate">{batch?.course}</span>
+                    <span className="w-20 sm:w-24 shrink-0 whitespace-nowrap">{rec.date}</span>
+                  </div>
                   <a 
                     href={rec.recordingUrl} 
                     target="_blank" 
                     rel="noreferrer" 
-                    className="flex items-center gap-1.5 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg font-bold text-sm transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded text-xs font-semibold transition-colors shrink-0"
                   >
-                    <PlayCircle className="w-4 h-4" /> Watch
+                    <PlayCircle className="w-3.5 h-3.5" /> Watch
                   </a>
                 </div>
               </div>
