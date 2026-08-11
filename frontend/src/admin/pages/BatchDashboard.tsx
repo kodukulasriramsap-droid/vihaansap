@@ -1638,50 +1638,78 @@ function RecordingsTab({ batchId }: { batchId: string }) {
         </form>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {recordings.map(rec => (
-          <div key={rec.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
-            <div className="h-32 bg-slate-100 relative">
-              {rec.thumbnail ? <img src={rec.thumbnail} alt={rec.title} className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} /> : <div className="w-full h-full grid place-items-center text-xs font-semibold text-slate-400">No thumbnail</div>}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <a href={rec.videoUrl} target="_blank" rel="noreferrer" className="bg-white/90 text-slate-900 p-3 rounded-full hover:scale-110 transition-transform">
-                  <PlayCircle className="w-6 h-6" />
-                </a>
-              </div>
-              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded">
-                {rec.duration || '--:--'}
-              </div>
-              {rec.visibility === 'Hidden' && (
-                <div className="absolute top-2 right-2 bg-red-500/90 text-white text-[10px] font-bold px-2 py-1 rounded">Hidden</div>
-              )}
-              {rec.recipientMode === 'selected' && (
-                <div className="absolute top-2 left-2 bg-indigo-600/90 text-white text-[10px] font-bold px-2 py-1 rounded">Selected</div>
-              )}
-            </div>
-            <div className="p-4 flex-1 flex flex-col">
-              <h4 className="font-bold text-slate-800 line-clamp-1">{rec.title}</h4>
-              {rec.description && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{rec.description}</p>}
-              <div className="mt-auto pt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                  <span className="px-2 py-0.5 bg-slate-100 rounded-md">{rec.source || 'Video'}</span>
-                  <span>{rec.date}</span>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => { setEditing(rec); setRecipientMode(rec.recipientMode || 'all'); setSelectedStudentIds(rec.recipientIds || []); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
-                  <button onClick={() => MockDB.deleteItem('recordings', rec.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                </div>
-              </div>
-            </div>
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        {recordings.length === 0 && !editing ? (
+          <div className="text-slate-500 p-12 text-center flex flex-col items-center">
+            <PlayCircle className="w-12 h-12 text-slate-300 mb-3" />
+            <h3 className="font-bold text-slate-700">No Recordings</h3>
+            <p className="text-sm mt-1 max-w-sm">Upload class recordings or link to external videos.</p>
           </div>
-        ))}
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-16">Thumb</th>
+                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Title</th>
+                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Date</th>
+                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Source</th>
+                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Recipients</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {recordings.map(rec => (
+                  <tr key={rec.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="w-16 h-10 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
+                        {rec.thumbnail
+                          ? <img src={rec.thumbnail} alt={rec.title} className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
+                          : <div className="w-full h-full flex items-center justify-center"><PlayCircle className="w-5 h-5 text-slate-400" /></div>
+                        }
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-slate-800 text-sm line-clamp-1">{rec.title}</h4>
+                          {rec.visibility === 'Hidden' && <span className="hidden md:inline text-[10px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded-md">Hidden</span>}
+                          {rec.recipientMode === 'selected' && <span className="hidden md:inline text-[10px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-md">Selected</span>}
+                        </div>
+                        {rec.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{rec.description}</p>}
+                        <div className="flex gap-2 mt-1 sm:hidden">
+                          <span className="text-[10px] text-slate-500">{rec.date}</span>
+                          {rec.visibility === 'Hidden' && <span className="text-[10px] font-bold text-red-600">Hidden</span>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600 hidden sm:table-cell">{rec.date || '—'}</td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs font-medium rounded-md">{rec.source || 'Video'}</span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-500 hidden md:table-cell">
+                      {rec.recipientMode === 'selected' ? `${(rec.recipientIds || []).length} students` : 'All'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end items-center gap-1">
+                        <a href={rec.videoUrl} target="_blank" rel="noreferrer" title="Open recording" className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                          <PlayCircle className="w-4 h-4" />
+                        </a>
+                        <button onClick={() => { setEditing(rec); setRecipientMode(rec.recipientMode || 'all'); setSelectedStudentIds(rec.recipientIds || []); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => MockDB.deleteItem('recordings', rec.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-      {recordings.length === 0 && !editing && (
-        <div className="text-slate-500 p-12 text-center bg-white rounded-xl border border-slate-200 flex flex-col items-center">
-          <PlayCircle className="w-12 h-12 text-slate-300 mb-3" />
-          <h3 className="font-bold text-slate-700">No Recordings</h3>
-          <p className="text-sm mt-1 max-w-sm">Upload class recordings or link to external videos.</p>
-        </div>
-      )}
     </div>
   );
 }

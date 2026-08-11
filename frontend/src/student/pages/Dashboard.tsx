@@ -7,7 +7,6 @@ import { useActiveBatch } from '../contexts/ActiveBatchContext';
 import { isTargetedToStudent } from '../../utils/recipientTargeting';
 import { isContentRead } from '../../utils/contentReadState';
 import CourseRatingModal from './CourseRatingModal';
-import SessionFeedbackModal from './SessionFeedbackModal';
 
 export default function Dashboard() {
   const { currentUser, studentProfile } = useAuth();
