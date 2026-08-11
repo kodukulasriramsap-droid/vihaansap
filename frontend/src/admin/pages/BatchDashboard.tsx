@@ -1633,58 +1633,40 @@ function RecordingsTab({ batchId }: { batchId: string }) {
             <p className="text-sm mt-1 max-w-sm">Upload class recordings or link to external videos.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Title</th>
-                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Date</th>
-                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Source</th>
-                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Recipients</th>
-                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {recordings.map(rec => (
-                  <tr key={rec.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-slate-800 text-sm line-clamp-1">{rec.title}</h4>
-                          {rec.visibility === 'Hidden' && <span className="hidden md:inline text-[10px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded-md">Hidden</span>}
-                          {rec.recipientMode === 'selected' && <span className="hidden md:inline text-[10px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-md">Selected</span>}
-                        </div>
-                        {rec.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{rec.description}</p>}
-                        <div className="flex gap-2 mt-1 sm:hidden">
-                          <span className="text-[10px] text-slate-500">{rec.date}</span>
-                          {rec.visibility === 'Hidden' && <span className="text-[10px] font-bold text-red-600">Hidden</span>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 hidden sm:table-cell">{rec.date || '—'}</td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs font-medium rounded-md">{rec.source || 'Video'}</span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 hidden md:table-cell">
-                      {rec.recipientMode === 'selected' ? `${(rec.recipientIds || []).length} students` : 'All'}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end items-center gap-1">
-                        <a href={rec.videoUrl} target="_blank" rel="noreferrer" title="Open recording" className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
-                          <PlayCircle className="w-4 h-4" />
-                        </a>
-                        <button onClick={() => { setEditing(rec); setRecipientMode(rec.recipientMode || 'all'); setSelectedStudentIds(rec.recipientIds || []); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => MockDB.deleteItem('recordings', rec.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
+            {recordings.map(rec => (
+              <div key={rec.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-slate-800 text-sm md:text-base leading-tight">{rec.title}</h3>
+                    {rec.visibility === 'Hidden' && <span className="text-[10px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded-md">Hidden</span>}
+                    {rec.recipientMode === 'selected' && <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-md">Selected</span>}
+                  </div>
+                  {rec.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{rec.description}</p>}
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-slate-500">{rec.date || '—'}</span>
+                    <span className="text-xs text-slate-500">• {rec.source || 'Video'}</span>
+                    <span className="text-xs text-slate-500">• {rec.recipientMode === 'selected' ? `${(rec.recipientIds || []).length} students` : 'All'}</span>
+                  </div>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex items-center gap-2">
+                  <a 
+                    href={rec.videoUrl} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg font-bold text-sm transition-colors shadow-sm"
+                  >
+                    <PlayCircle className="w-4 h-4" /> Watch
+                  </a>
+                  <button onClick={() => { setEditing(rec); setRecipientMode(rec.recipientMode || 'all'); setSelectedStudentIds(rec.recipientIds || []); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => MockDB.deleteItem('recordings', rec.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
