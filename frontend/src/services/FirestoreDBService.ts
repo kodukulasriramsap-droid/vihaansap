@@ -70,56 +70,21 @@ export class FirestoreDBService {
 
     // 1. If user is a student or mentor, we must securely fetch their assigned/enrolled batches.
     if (!isAdmin) {
-      let myBatchIds: string[] = [];
-      let unsubBatches = () => {};
+      const BATCH_DEPENDENT_COLLECTIONS = ['batchPlanner', 'batchSessions', 'liveClasses', 'schedules', 'assignments'];
+      const TARGETED_COLLECTIONS = ['studyMaterials', 'recordings'];
+      
+      let dependentUnsubscribers: (() => void)[] = [];
+      const updateDependentSubscriptions = (myBatchIds: string[]) => {
+        dependentUnsubscribers.forEach(u => u());
+        dependentUnsubscribers = [];
 
-      if (isMentor) {
-        // Mentors rely on assignedBatchIds in their mentor doc
-        const { getDoc, doc } = await import('firebase/firestore');
-        const mentorId = user.email ? user.email.trim().toLowerCase() : user.uid;
-        const mentorDoc = await getDoc(doc(db, 'mentors', mentorId));
-        if (mentorDoc.exists()) {
-          myBatchIds = mentorDoc.data().assignedBatchIds || [];
-        }
-        // Mentor batch snapshot is handled by MentorService in MentorPortal, but we can do a global sync here too.
         if (myBatchIds.length > 0) {
-          const batchesQuery = query(collection(db, 'batches'), where(documentId(), 'in', myBatchIds.slice(0, 10)));
-          unsubBatches = onSnapshot(batchesQuery, (snapshot) => {
-            const myBatches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            const currentDb = MockDB.get();
-            (currentDb['batches'] as any[]) = myBatches;
-            MockDB.set(currentDb);
-          });
-        }
-      } else {
-        // Student logic
-        const batchesQuery = query(collection(db, 'batches'), where('studentIds', 'array-contains', user.uid));
-        unsubBatches = onSnapshot(batchesQuery, (snapshot) => {
-          const myBatches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-          const currentDb = MockDB.get();
-          (currentDb['batches'] as any[]) = myBatches;
-          MockDB.set(currentDb);
-        });
-        
-        // For students, we wait for the snapshot to get myBatchIds (as before) but we can also just fetch it once to bootstrap listeners
-        const { getDocs } = await import('firebase/firestore');
-        const snapshot = await getDocs(batchesQuery);
-        myBatchIds = snapshot.docs.map(d => d.id);
-      }
-        
-        // Now that we have batchIds, we must safely sync dependent collections using `in` queries
-        // because Firestore rules enforce `isEnrolledInBatch(resource.data.batchId)`.
-        const BATCH_DEPENDENT_COLLECTIONS = ['batchPlanner', 'batchSessions', 'liveClasses', 'schedules', 'assignments'];
-        const TARGETED_COLLECTIONS = ['studyMaterials', 'recordings'];
-        if (myBatchIds.length > 0) {
-          // Firestore 'in' queries support max 10 values. We must chunk them if necessary.
           const chunkedBatchIds = [];
           for (let i = 0; i < myBatchIds.length; i += 10) {
             chunkedBatchIds.push(myBatchIds.slice(i, i + 10));
           }
           
           for (const colName of BATCH_DEPENDENT_COLLECTIONS) {
-            // Unsubscribe existing listeners for this collection if any
             for (const chunk of chunkedBatchIds) {
               const q = query(collection(db, colName), where('batchId', 'in', chunk));
               const unsub = onSnapshot(q, (snapshot) => {
@@ -128,47 +93,114 @@ export class FirestoreDBService {
                 (currentDb[colName] as any[]) = firestoreData;
                 MockDB.set(currentDb);
               }, (err) => console.error(`[FirestoreDBService] Error syncing dependent ${colName}:`, err));
-              this.unsubscribers.push(unsub);
+              dependentUnsubscribers.push(unsub);
             }
           }
 
-          // Implement multi-query merger for collections with targeted visibility (studyMaterials, recordings)
           for (const colName of TARGETED_COLLECTIONS) {
             for (const chunk of chunkedBatchIds) {
               const colRef = collection(db, colName);
-              const mergerState = new Map<string, any>();
               
-              const mergeDocs = (docs: any[]) => {
-                docs.forEach(d => mergerState.set(d.id, d));
-                const currentDb = MockDB.get();
-                (currentDb[colName as 'studyMaterials' | 'recordings'] as any[]) = Array.from(mergerState.values());
-                MockDB.set(currentDb);
-              };
+              if (isMentor) {
+                // Mentors can see ALL targeted content in their assigned batches
+                const q = query(colRef, where('batchId', 'in', chunk));
+                const unsub = onSnapshot(q, (snapshot) => {
+                  const firestoreData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                  const currentDb = MockDB.get();
+                  (currentDb[colName as 'studyMaterials' | 'recordings'] as any[]) = firestoreData;
+                  MockDB.set(currentDb);
+                }, (err) => console.error(`[FirestoreDBService] Mentor sync error ${colName}:`, err));
+                dependentUnsubscribers.push(unsub);
+              } else {
+                // Student logic: requires merging of visibility rules
+                const mergerState = new Map<string, any>();
+                const mergeDocs = (docs: any[]) => {
+                  docs.forEach(d => mergerState.set(d.id, d));
+                  const currentDb = MockDB.get();
+                  (currentDb[colName as 'studyMaterials' | 'recordings'] as any[]) = Array.from(mergerState.values());
+                  MockDB.set(currentDb);
+                };
 
-              // Q1: Target 'all'
-              const q1 = query(colRef, where('batchId', 'in', chunk), where('recipientMode', '==', 'all'));
-              this.unsubscribers.push(onSnapshot(q1, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q1:`, err)));
+                const q1 = query(colRef, where('batchId', 'in', chunk), where('recipientMode', '==', 'all'));
+                dependentUnsubscribers.push(onSnapshot(q1, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q1:`, err)));
 
-              // Q2: Target 'all' (legacy field)
-              const q2 = query(colRef, where('batchId', 'in', chunk), where('recipientType', '==', 'all'));
-              this.unsubscribers.push(onSnapshot(q2, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q2:`, err)));
+                const q2 = query(colRef, where('batchId', 'in', chunk), where('recipientType', '==', 'all'));
+                dependentUnsubscribers.push(onSnapshot(q2, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q2:`, err)));
 
-              // Q3: Target selected student
-              const q3 = query(colRef, where('batchId', 'in', chunk), where('recipientIds', 'array-contains', user.uid));
-              this.unsubscribers.push(onSnapshot(q3, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q3:`, err)));
+                const q3 = query(colRef, where('batchId', 'in', chunk), where('recipientIds', 'array-contains', user.uid));
+                dependentUnsubscribers.push(onSnapshot(q3, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q3:`, err)));
 
-              // Q4: Legacy visibility 'Students'
-              const q4 = query(colRef, where('batchId', 'in', chunk), where('visibility', '==', 'Students'));
-              this.unsubscribers.push(onSnapshot(q4, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q4:`, err)));
+                const q4 = query(colRef, where('batchId', 'in', chunk), where('visibility', '==', 'Students'));
+                dependentUnsubscribers.push(onSnapshot(q4, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q4:`, err)));
 
-              // Q5: Legacy visibility 'Everyone'
-              const q5 = query(colRef, where('batchId', 'in', chunk), where('visibility', '==', 'Everyone'));
-              this.unsubscribers.push(onSnapshot(q5, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q5:`, err)));
+                const q5 = query(colRef, where('batchId', 'in', chunk), where('visibility', '==', 'Everyone'));
+                dependentUnsubscribers.push(onSnapshot(q5, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q5:`, err)));
+              }
             }
           }
         }
-      
-      this.unsubscribers.push(unsubBatches);
+      };
+
+      if (isMentor) {
+        const { doc } = await import('firebase/firestore');
+        const mentorId = user.email ? user.email.trim().toLowerCase() : user.uid;
+        const mentorDocRef = doc(db, 'mentors', mentorId);
+        
+        let batchUnsubscribers: (() => void)[] = [];
+        
+        const unsubMentor = onSnapshot(mentorDocRef, (mentorDoc) => {
+          batchUnsubscribers.forEach(u => u());
+          batchUnsubscribers = [];
+          
+          let myBatchIds: string[] = [];
+          if (mentorDoc.exists()) {
+            myBatchIds = mentorDoc.data().assignedBatchIds || [];
+          }
+          
+          if (myBatchIds.length > 0) {
+            const chunkedBatchIds = [];
+            for (let i = 0; i < myBatchIds.length; i += 10) chunkedBatchIds.push(myBatchIds.slice(i, i + 10));
+            
+            const batchMerger = new Map<string, any>();
+            chunkedBatchIds.forEach(chunk => {
+              const batchesQuery = query(collection(db, 'batches'), where(documentId(), 'in', chunk));
+              const unsub = onSnapshot(batchesQuery, (snapshot) => {
+                snapshot.docs.forEach(d => batchMerger.set(d.id, { id: d.id, ...d.data() }));
+                const currentDb = MockDB.get();
+                (currentDb['batches'] as any[]) = Array.from(batchMerger.values());
+                MockDB.set(currentDb);
+              });
+              batchUnsubscribers.push(unsub);
+            });
+          } else {
+             const currentDb = MockDB.get();
+             (currentDb['batches'] as any[]) = [];
+             MockDB.set(currentDb);
+          }
+          
+          updateDependentSubscriptions(myBatchIds);
+        });
+        
+        this.unsubscribers.push(unsubMentor);
+        this.unsubscribers.push(() => batchUnsubscribers.forEach(u => u()));
+        this.unsubscribers.push(() => dependentUnsubscribers.forEach(u => u()));
+
+      } else {
+        const batchesQuery = query(collection(db, 'batches'), where('studentIds', 'array-contains', user.uid));
+        const unsubBatches = onSnapshot(batchesQuery, (snapshot) => {
+          const myBatches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const currentDb = MockDB.get();
+          (currentDb['batches'] as any[]) = myBatches;
+          MockDB.set(currentDb);
+          
+          const myBatchIds = myBatches.map(b => b.id);
+          updateDependentSubscriptions(myBatchIds);
+        });
+        
+        this.unsubscribers.push(unsubBatches);
+        this.unsubscribers.push(() => dependentUnsubscribers.forEach(u => u()));
+      }
+
 
       // ── Scoped doubts subscription ─────────────────────────────────────────
       const doubtsQuery = isMentor 

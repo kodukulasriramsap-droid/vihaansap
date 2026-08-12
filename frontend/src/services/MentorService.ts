@@ -38,9 +38,21 @@ export const MentorService = {
     return onSnapshot(doc(db, 'mentors', mentorDocumentId(email)), snap => callback(snap.exists() ? { id: snap.id, ...snap.data() } as MentorRecord : null), onError);
   },
   subscribeAssignedBatches(mentor: MentorRecord, callback: (batches: any[]) => void, onError: (error: Error) => void): Unsubscribe {
-    if (!mentor.assignedBatchIds?.length) { callback([]); return () => undefined; }
-    // Security rules re-check each returned batch; this query does not grant access.
-    return onSnapshot(query(collection(db, 'batches'), where(documentId(), 'in', mentor.assignedBatchIds.slice(0, 10))), snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onError);
+    const ids = mentor.assignedBatchIds || [];
+    if (!ids.length) { callback([]); return () => undefined; }
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
+    const results = new Map<string, any>();
+    const unsubscribers: Unsubscribe[] = [];
+    const emit = () => callback(Array.from(results.values()));
+    for (const chunk of chunks) {
+      const q = query(collection(db, 'batches'), where(documentId(), 'in', chunk));
+      unsubscribers.push(onSnapshot(q, snap => {
+        snap.docs.forEach(d => results.set(d.id, { id: d.id, ...d.data() }));
+        emit();
+      }, onError));
+    }
+    return () => unsubscribers.forEach(u => u());
   },
   subscribeMyCourses(mentor: MentorRecord, callback: (courses: any[]) => void, onError: (error: Error) => void): Unsubscribe {
     const ids = mentor.assignedCourseIds || [];

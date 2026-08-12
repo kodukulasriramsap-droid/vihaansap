@@ -16,12 +16,12 @@ service cloud.firestore {
     // Legacy users/{uid}.role documents are not used for mentor access.
     function isActiveMentor() {
       return signedIn() && request.auth.token.email != null &&
-        exists(/databases/$(database)/documents/mentors/$(request.auth.token.email)) &&
-        get(/databases/$(database)/documents/mentors/$(request.auth.token.email)).data.status == 'active' &&
-        get(/databases/$(database)/documents/mentors/$(request.auth.token.email)).data.uid == request.auth.uid;
+        exists(/databases/$(database)/documents/mentors/$(request.auth.token.email.lower())) &&
+        get(/databases/$(database)/documents/mentors/$(request.auth.token.email.lower())).data.status == 'active' &&
+        get(/databases/$(database)/documents/mentors/$(request.auth.token.email.lower())).data.uid == request.auth.uid;
     }
     function isAssignedMentor(batchId) {
-      return isActiveMentor() && batchId in get(/databases/$(database)/documents/mentors/$(request.auth.token.email)).data.assignedBatchIds;
+      return isActiveMentor() && batchId in get(/databases/$(database)/documents/mentors/$(request.auth.token.email.lower())).data.assignedBatchIds;
     }
 
     // ─── Batch enrollment helpers ─────────────────────────────────────────────
