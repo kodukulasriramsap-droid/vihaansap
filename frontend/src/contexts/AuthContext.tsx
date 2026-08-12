@@ -94,13 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(user);
 
       if (user) {
-        // /mentor uses its own Firestore-backed authorization flow. It must not
-        // start the student/MockDB subscriptions or create/check a student record.
         const isMentorPortal = typeof window !== 'undefined' && window.location.pathname.startsWith('/mentor');
-        // Start collection-level Firestore listeners (courses, batches, etc.)
-        if (!isMentorPortal && !unsubFirestore) {
-          FirestoreDBService.subscribeToAll();
-        }
+
 
         let role: 'admin' | 'mentor' | 'student' = 'student';
 
@@ -132,6 +127,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setUserRole(role);
+
+        if (!unsubFirestore) {
+          FirestoreDBService.subscribeToAll(role);
+        }
 
         if (isMentorPortal) {
           if (unsubStudentSnapshot.current) {

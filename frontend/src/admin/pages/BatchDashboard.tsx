@@ -1909,9 +1909,13 @@ export default function BatchDashboard() {
     setSyncStats(null);
   };
 
+  const isMentorView = typeof window !== 'undefined' && window.location.pathname.startsWith('/mentor');
+  const backLink = isMentorView ? '/mentor/dashboard' : '/admin/batches';
+
+
 
   if (!batch) {
-    return <div className="p-8">Batch not found. <Link to="/admin/batches" className="text-indigo-600 underline">Go Back</Link></div>;
+    return <div className="p-8">Batch not found. <Link to={backLink} className="text-indigo-600 underline">Go Back</Link></div>;
   }
 
   const tabs = [
@@ -1929,7 +1933,7 @@ export default function BatchDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link to="/admin/batches" className="p-2 bg-white rounded-full border border-slate-200 hover:bg-slate-50 text-slate-500">
+        <Link to={backLink} className="p-2 bg-white rounded-full border border-slate-200 hover:bg-slate-50 text-slate-500">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>

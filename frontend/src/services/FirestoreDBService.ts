@@ -7,6 +7,7 @@ import {
   serverTimestamp,
   query,
   where,
+  documentId,
 } from 'firebase/firestore';
 import { auth } from '../config/firebase';
 import { isAdminEmail } from '../config/adminConfig';
@@ -54,35 +55,62 @@ export class FirestoreDBService {
    * Initializes real-time listeners for all collections.
    * Keeps MockDB (the synchronous in-memory store) completely up to date.
    */
-  static subscribeToAll(): void {
+  static async subscribeToAll(role: 'admin' | 'mentor' | 'student' = 'student'): Promise<void> {
     if (!db || !auth.currentUser) {
       console.warn('[FirestoreDBService] Firestore or Auth not configured/ready.');
       return;
     }
 
     const user = auth.currentUser;
-    const isAdmin = isAdminEmail(user.email);
+    const isAdmin = role === 'admin' || isAdminEmail(user.email);
+    const isMentor = role === 'mentor';
 
     // Clean up any existing listeners
     this.unsubscribeAll();
 
-    // 1. If user is a student, we must first securely fetch their enrolled batches.
-    // We cannot query the full batches collection because of least-privilege Firestore Rules.
+    // 1. If user is a student or mentor, we must securely fetch their assigned/enrolled batches.
     if (!isAdmin) {
-      const batchesQuery = query(collection(db, 'batches'), where('studentIds', 'array-contains', user.uid));
-      const unsubBatches = onSnapshot(batchesQuery, (snapshot) => {
-        const myBatches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        const currentDb = MockDB.get();
-        (currentDb['batches'] as any[]) = myBatches;
-        MockDB.set(currentDb);
+      let myBatchIds: string[] = [];
+      let unsubBatches = () => {};
 
-        const myBatchIds = myBatches.map(b => b.id);
+      if (isMentor) {
+        // Mentors rely on assignedBatchIds in their mentor doc
+        const { getDoc, doc } = await import('firebase/firestore');
+        const mentorId = user.email ? user.email.trim().toLowerCase() : user.uid;
+        const mentorDoc = await getDoc(doc(db, 'mentors', mentorId));
+        if (mentorDoc.exists()) {
+          myBatchIds = mentorDoc.data().assignedBatchIds || [];
+        }
+        // Mentor batch snapshot is handled by MentorService in MentorPortal, but we can do a global sync here too.
+        if (myBatchIds.length > 0) {
+          const batchesQuery = query(collection(db, 'batches'), where(documentId(), 'in', myBatchIds.slice(0, 10)));
+          unsubBatches = onSnapshot(batchesQuery, (snapshot) => {
+            const myBatches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            const currentDb = MockDB.get();
+            (currentDb['batches'] as any[]) = myBatches;
+            MockDB.set(currentDb);
+          });
+        }
+      } else {
+        // Student logic
+        const batchesQuery = query(collection(db, 'batches'), where('studentIds', 'array-contains', user.uid));
+        unsubBatches = onSnapshot(batchesQuery, (snapshot) => {
+          const myBatches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const currentDb = MockDB.get();
+          (currentDb['batches'] as any[]) = myBatches;
+          MockDB.set(currentDb);
+        });
+        
+        // For students, we wait for the snapshot to get myBatchIds (as before) but we can also just fetch it once to bootstrap listeners
+        const { getDocs } = await import('firebase/firestore');
+        const snapshot = await getDocs(batchesQuery);
+        myBatchIds = snapshot.docs.map(d => d.id);
+      }
         
         // Now that we have batchIds, we must safely sync dependent collections using `in` queries
         // because Firestore rules enforce `isEnrolledInBatch(resource.data.batchId)`.
         const BATCH_DEPENDENT_COLLECTIONS = ['batchPlanner', 'batchSessions', 'liveClasses', 'schedules', 'assignments'];
         const TARGETED_COLLECTIONS = ['studyMaterials', 'recordings'];
-        
         if (myBatchIds.length > 0) {
           // Firestore 'in' queries support max 10 values. We must chunk them if necessary.
           const chunkedBatchIds = [];
@@ -139,13 +167,13 @@ export class FirestoreDBService {
             }
           }
         }
-      }, (err) => console.error('[FirestoreDBService] Error syncing batches for student:', err));
       
       this.unsubscribers.push(unsubBatches);
 
       // ── Scoped doubts subscription ─────────────────────────────────────────
-      // Rule: allow read if studentId == request.auth.uid
-      const doubtsQuery = query(collection(db, 'doubts'), where('studentId', '==', user.uid));
+      const doubtsQuery = isMentor 
+        ? query(collection(db, 'doubts')) 
+        : query(collection(db, 'doubts'), where('studentId', '==', user.uid));
       const unsubDoubts = onSnapshot(doubtsQuery, (snapshot) => {
         const firestoreData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         const currentDb = MockDB.get();
@@ -175,7 +203,10 @@ export class FirestoreDBService {
       this.unsubscribers.push(unsubRepliesAuthor);
 
       // Q2: Replies on this student's doubts (e.g. mentor replies)
-      const repliesByStudent = query(collection(db, 'doubtReplies'), where('studentId', '==', user.uid));
+      // Mentors can read all replies to doubts in their batches, but for simplicity here if isMentor we just query all doubtReplies (rules permitting)
+      const repliesByStudent = isMentor
+        ? query(collection(db, 'doubtReplies'))
+        : query(collection(db, 'doubtReplies'), where('studentId', '==', user.uid));
       const unsubRepliesStudent = onSnapshot(repliesByStudent, (snapshot) => {
         mergeReplies('student', snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
       }, (err) => console.error('[FirestoreDBService] Error syncing doubtReplies (student):', err));
