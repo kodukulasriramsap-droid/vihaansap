@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { BookOpen } from 'lucide-react';
 import { Link, Navigate, Outlet, useOutletContext, useParams } from 'react-router-dom';
+
 import { useAuth } from '../contexts/AuthContext';
 import { MentorRecord, MentorService } from '../services/MentorService';
 import BatchDashboard from '../admin/pages/BatchDashboard';
@@ -59,6 +61,7 @@ export function MentorLayout() {
       <header className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
         <Link to="/mentor/dashboard" className="font-bold text-lg">Mentor Portal</Link>
         <div className="flex items-center gap-4">
+          <Link to="/mentor/courses" className="text-sm text-slate-300 hover:text-white flex items-center gap-1"><BookOpen className="w-4 h-4" />Courses</Link>
           <span className="text-sm text-slate-300">{mentor.name || mentor.email}</span>
           <button
             onClick={() => void logout()}
@@ -151,6 +154,64 @@ export function MentorBatch() {
       </Link>
       {/* Reuse the full admin BatchDashboard — it reads batchId from the URL */}
       <BatchDashboard />
+    </div>
+  );
+}
+
+// ─── Courses (admin-granted course access) ─────────────────────────────────
+export function MentorCourses() {
+  const mentor = useOutletContext<MentorRecord>();
+  const [courses, setCourses] = useState<any[]>([]);
+  const [courseError, setCourseError] = useState('');
+
+  useEffect(() => {
+    if (mentor) {
+      return MentorService.subscribeMyCourses(
+        mentor,
+        setCourses,
+        err => setCourseError(err.message)
+      );
+    }
+  }, [mentor]);
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-800">My Courses</h1>
+        <p className="mt-1 text-slate-500">Courses assigned to you by the administrator.</p>
+      </div>
+      {courseError && <p className="text-sm text-red-600 mb-4">{courseError}</p>}
+      {courses.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-100 p-12 text-center text-slate-500">
+          <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <p>No courses are currently assigned to you. Please contact the administrator.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {courses.map(course => (
+            <div key={course.id} className="rounded-xl border bg-white p-5 hover:border-indigo-300 hover:shadow-md transition-all">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-bold text-slate-800 truncate">{course.name}</h2>
+                  {course.code && <p className="text-xs text-slate-400 mt-0.5">{course.code}</p>}
+                </div>
+                {course.status && (
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                    course.status === 'Published' ? 'bg-green-100 text-green-700' :
+                    course.status === 'Draft' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-slate-100 text-slate-600'
+                  }`}>{course.status}</span>
+                )}
+              </div>
+              {course.description && <p className="text-sm text-slate-500 mt-2 line-clamp-2">{course.description}</p>}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {course.duration && <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{course.duration}</span>}
+                {course.level && <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{course.level}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
