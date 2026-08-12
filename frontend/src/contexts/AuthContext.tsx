@@ -86,8 +86,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Auth persistence error:', error);
     });
 
-    // Track the Firestore collection listener (shared across all collections)
-    let unsubFirestore: (() => void) | undefined;
+    // Track whether Firestore collection listeners have been started.
+    // FirestoreDBService manages its own unsubscribers internally.
+    let firestoreStarted = false;
 
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
@@ -128,7 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUserRole(role);
 
-        if (!unsubFirestore) {
+        if (!firestoreStarted) {
+          firestoreStarted = true;
           FirestoreDBService.subscribeToAll(role);
         }
 
@@ -213,9 +215,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       unsubAuth();
-      if (unsubFirestore) {
-        unsubFirestore();
-      }
+      FirestoreDBService.unsubscribeAll();
       // Clean up per-student snapshot listener
       if (unsubStudentSnapshot.current) {
         unsubStudentSnapshot.current();
