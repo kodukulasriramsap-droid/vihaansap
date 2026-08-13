@@ -166,7 +166,7 @@ export function MentorBatch() {
   useEffect(() => {
     if (mentor && batchId) {
       // Security: only allow access if batchId is in the mentor's assigned list
-      setAuthorised(mentor.assignedBatchIds.includes(batchId));
+      setAuthorised((mentor.assignedBatchIds || []).includes(batchId));
     }
   }, [mentor, batchId]);
 
@@ -204,7 +204,7 @@ export function MentorCourses() {
     // If we know which batch is active, pass a "filtered" mentor record that
     // only has that one batch — subscribeMyCourses will show courses only for it.
     const mentorForQuery = scopedBatchId
-      ? { ...mentor, assignedBatchIds: mentor.assignedBatchIds.filter(id => id === scopedBatchId) }
+      ? { ...mentor, assignedBatchIds: (mentor.assignedBatchIds || []).filter(id => id === scopedBatchId) }
       : mentor;
 
     return MentorService.subscribeMyCourses(

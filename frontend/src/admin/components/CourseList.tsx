@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, Copy, Search, Filter, Image as ImageIcon } from 'lucide-react';
+import { Edit2, Trash2, Copy, Search, Filter } from 'lucide-react';
 import { useDB } from '../../hooks/useDB';
 import { MockDB } from '../../services/MockDB';
 import { ArrowUp, ArrowDown } from 'lucide-react';
@@ -92,13 +92,6 @@ export default function CourseList({ onEdit, onDuplicate, onDelete }: CourseList
                 <tr key={course.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      {course.thumbnail ? (
-                        <img src={course.thumbnail} alt={course.name} className="w-10 h-10 rounded object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-400">
-                          <ImageIcon className="w-5 h-5" />
-                        </div>
-                      )}
                       <div>
                         <p className="text-sm font-bold text-slate-800">{course.name}</p>
                         <p className="text-xs text-slate-500">{course.code}</p>

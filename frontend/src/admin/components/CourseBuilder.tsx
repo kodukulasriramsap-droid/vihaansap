@@ -227,18 +227,7 @@ export default function CourseBuilder({ initialData, onClose, onSave }: CourseBu
                       <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Short Description</label>
                       <textarea name="description" rows={3} value={formData.description || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1763B6]/20 outline-none" />
                     </div>
-                    <div className="md:col-span-2">
-                      <ImageUploader
-                        label="Course Thumbnail"
-                        value={formData.thumbnail || ''}
-                        onChange={(url) => setFormData((prev: any) => ({ ...prev, thumbnail: url }))}
-                        folder="courses"
-                        maxDimension={1200}
-                        recommendedSize="1200 × 675 px"
-                        recommendedFormat="PNG, JPG, WEBP"
-                        previewClassName="w-full h-32 object-cover rounded"
-                      />
-                    </div>
+
                     <div className="md:col-span-2">
                       <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Long Description</label>
                       <textarea name="longDescription" rows={5} value={formData.longDescription || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1763B6]/20 outline-none" />
