@@ -55,23 +55,77 @@ export const MentorService = {
     return () => unsubscribers.forEach(u => u());
   },
   subscribeMyCourses(mentor: MentorRecord, callback: (courses: any[]) => void, onError: (error: Error) => void): Unsubscribe {
-    const ids = mentor.assignedCourseIds || [];
-    if (!ids.length) { callback([]); return () => undefined; }
-    // courses collection is publicly readable; rules allow read: if true
-    // Chunk into groups of 10 (Firestore 'in' limit)
-    const chunks: string[][] = [];
-    for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
-    const results = new Map<string, any>();
-    const unsubscribers: Unsubscribe[] = [];
-    const emit = () => callback(Array.from(results.values()));
-    for (const chunk of chunks) {
-      const q = query(collection(db, 'courses'), where(documentId(), 'in', chunk));
-      unsubscribers.push(onSnapshot(q, snap => {
-        snap.docs.forEach(d => results.set(d.id, { id: d.id, ...d.data() }));
-        emit();
-      }, onError));
+    // Two sources merged:
+    // A) Courses derived from assigned batches (batch.course = course name string)
+    // B) Courses explicitly assigned by admin via assignedCourseIds (course document IDs)
+    const mergedResults = new Map<string, any>();
+    const emit = () => callback(Array.from(mergedResults.values()));
+    const allUnsubscribers: Unsubscribe[] = [];
+
+    // Source A: batch-derived courses via batch.course name field
+    const batchIds = mentor.assignedBatchIds || [];
+    if (batchIds.length > 0) {
+      const batchChunks: string[][] = [];
+      for (let i = 0; i < batchIds.length; i += 10) batchChunks.push(batchIds.slice(i, i + 10));
+      
+      // Track current course-name unsubscribers so we can rebuild when batches change
+      let courseNameUnsubs: Unsubscribe[] = [];
+      
+      const rebuildCourseNameListeners = (courseNames: string[]) => {
+        courseNameUnsubs.forEach(u => u());
+        courseNameUnsubs = [];
+        // Remove all batch-derived keys before re-querying
+        Array.from(mergedResults.keys()).filter(k => k.startsWith('batch:')).forEach(k => mergedResults.delete(k));
+        if (!courseNames.length) { emit(); return; }
+        const nameChunks: string[][] = [];
+        for (let i = 0; i < courseNames.length; i += 10) nameChunks.push(courseNames.slice(i, i + 10));
+        nameChunks.forEach(chunk => {
+          const q = query(collection(db, 'courses'), where('name', 'in', chunk));
+          const unsub = onSnapshot(q, snap => {
+            snap.docs.forEach(d => mergedResults.set('batch:' + d.id, { id: d.id, ...d.data() }));
+            emit();
+          }, onError);
+          courseNameUnsubs.push(unsub);
+        });
+      };
+      allUnsubscribers.push(() => courseNameUnsubs.forEach(u => u()));
+
+      // Subscribe to batch docs to get their .course name field
+      const batchResults = new Map<string, any>();
+      batchChunks.forEach(chunk => {
+        const q = query(collection(db, 'batches'), where(documentId(), 'in', chunk));
+        const unsub = onSnapshot(q, snap => {
+          snap.docs.forEach(d => batchResults.set(d.id, d.data()));
+          // Collect unique, non-empty course names across all fetched batches
+          const courseNames = [...new Set(
+            Array.from(batchResults.values())
+              .map(b => (b.course || '').trim())
+              .filter(Boolean)
+          )];
+          rebuildCourseNameListeners(courseNames);
+        }, onError);
+        allUnsubscribers.push(unsub);
+      });
     }
-    return () => unsubscribers.forEach(u => u());
+
+    // Source B: explicitly assigned course IDs
+    const ids = mentor.assignedCourseIds || [];
+    if (ids.length > 0) {
+      const chunks: string[][] = [];
+      for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
+      chunks.forEach(chunk => {
+        const q = query(collection(db, 'courses'), where(documentId(), 'in', chunk));
+        allUnsubscribers.push(onSnapshot(q, snap => {
+          snap.docs.forEach(d => mergedResults.set('explicit:' + d.id, { id: d.id, ...d.data() }));
+          emit();
+        }, onError));
+      });
+    }
+
+    // If mentor has neither batches nor explicit courses, emit empty immediately
+    if (!batchIds.length && !ids.length) { callback([]); }
+
+    return () => allUnsubscribers.forEach(u => u());
   },
   async getBatch(batchId: string) {
     const snap = await getDoc(doc(db, 'batches', batchId));
