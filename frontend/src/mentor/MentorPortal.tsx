@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
 import { BookOpen } from 'lucide-react';
-import { Link, Navigate, Outlet, useOutletContext, useParams } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation, useOutletContext, useParams } from 'react-router-dom';
 
 import { useAuth } from '../contexts/AuthContext';
 import { MentorRecord, MentorService } from '../services/MentorService';
 import BatchDashboard from '../admin/pages/BatchDashboard';
+
+// ─── Shared outlet context type ────────────────────────────────────────────────
+export interface MentorOutletContext {
+  mentor: MentorRecord;
+  activeBatchId: string | null;
+}
 
 // ─── Layout ────────────────────────────────────────────────────────────────────
 export function MentorLayout() {
@@ -12,6 +18,11 @@ export function MentorLayout() {
   const [mentor, setMentor] = useState<MentorRecord | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
+
+  // Derive the active batchId from the URL — e.g. /mentor/batches/XYZ or /mentor/batches/XYZ/courses
+  const batchMatch = location.pathname.match(/\/mentor\/batches\/([^/]+)/);
+  const activeBatchId = batchMatch ? batchMatch[1] : null;
 
   useEffect(() => {
     if (!currentUser) { setLoading(false); return; }
@@ -56,12 +67,30 @@ export function MentorLayout() {
     </div>
   );
 
+  // When inside a batch, the Courses link is scoped to that batch.
+  // When on the dashboard (no active batch), Courses shows all assigned-batch courses.
+  const coursesHref = activeBatchId
+    ? `/mentor/batches/${activeBatchId}/courses`
+    : '/mentor/courses';
+
+  const outletContext: MentorOutletContext = { mentor, activeBatchId };
+
   return (
     <main className="min-h-screen bg-slate-50">
       <header className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
         <Link to="/mentor/dashboard" className="font-bold text-lg">Mentor Portal</Link>
         <div className="flex items-center gap-4">
-          <Link to="/mentor/courses" className="text-sm text-slate-300 hover:text-white flex items-center gap-1"><BookOpen className="w-4 h-4" />Courses</Link>
+          {activeBatchId && (
+            <Link
+              to={`/mentor/batches/${activeBatchId}`}
+              className="text-sm text-slate-300 hover:text-white"
+            >
+              ← Batch Workspace
+            </Link>
+          )}
+          <Link to={coursesHref} className="text-sm text-slate-300 hover:text-white flex items-center gap-1">
+            <BookOpen className="w-4 h-4" />Courses
+          </Link>
           <span className="text-sm text-slate-300">{mentor.name || mentor.email}</span>
           <button
             onClick={() => void logout()}
@@ -72,7 +101,7 @@ export function MentorLayout() {
         </div>
       </header>
       <div className="max-w-7xl mx-auto p-6">
-        <Outlet context={mentor} />
+        <Outlet context={outletContext} />
       </div>
     </main>
   );
@@ -80,7 +109,7 @@ export function MentorLayout() {
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 export function MentorDashboard() {
-  const mentor = useOutletContext<MentorRecord>();
+  const { mentor } = useOutletContext<MentorOutletContext>();
   const [batches, setBatches] = useState<any[]>([]);
   const [batchError, setBatchError] = useState('');
 
@@ -128,10 +157,10 @@ export function MentorDashboard() {
   );
 }
 
-// ─── Batch (full BatchDashboard, scoped to mentor's authorised batch) ──────────
+// ─── Batch workspace (full BatchDashboard, scoped to mentor's authorised batch) ─
 export function MentorBatch() {
   const { batchId } = useParams();
-  const mentor = useOutletContext<MentorRecord>();
+  const { mentor } = useOutletContext<MentorOutletContext>();
   const [authorised, setAuthorised] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -158,33 +187,48 @@ export function MentorBatch() {
   );
 }
 
-// ─── Courses (admin-granted course access) ─────────────────────────────────
+// ─── Courses — scoped to the active batch when inside a batch workspace ────────
 export function MentorCourses() {
-  const mentor = useOutletContext<MentorRecord>();
+  const { mentor, activeBatchId } = useOutletContext<MentorOutletContext>();
+  // When accessed via /mentor/batches/:batchId/courses, batchId is in the URL.
+  // When accessed via /mentor/courses directly, batchId is undefined.
+  const { batchId: urlBatchId } = useParams();
+  const scopedBatchId = urlBatchId ?? activeBatchId;
+
   const [courses, setCourses] = useState<any[]>([]);
   const [courseError, setCourseError] = useState('');
 
   useEffect(() => {
-    if (mentor) {
-      return MentorService.subscribeMyCourses(
-        mentor,
-        setCourses,
-        err => setCourseError(err.message)
-      );
-    }
-  }, [mentor]);
+    if (!mentor) return;
+
+    // If we know which batch is active, pass a "filtered" mentor record that
+    // only has that one batch — subscribeMyCourses will show courses only for it.
+    const mentorForQuery = scopedBatchId
+      ? { ...mentor, assignedBatchIds: mentor.assignedBatchIds.filter(id => id === scopedBatchId) }
+      : mentor;
+
+    return MentorService.subscribeMyCourses(
+      mentorForQuery,
+      setCourses,
+      err => setCourseError(err.message)
+    );
+  }, [mentor, scopedBatchId]);
 
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-800">My Courses</h1>
-        <p className="mt-1 text-slate-500">Courses assigned to you by the administrator.</p>
+        <p className="mt-1 text-slate-500">
+          {scopedBatchId
+            ? 'Courses for the selected batch.'
+            : 'Courses across all your assigned batches.'}
+        </p>
       </div>
       {courseError && <p className="text-sm text-red-600 mb-4">{courseError}</p>}
       {courses.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-100 p-12 text-center text-slate-500">
           <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p>No courses are currently assigned to you. Please contact the administrator.</p>
+          <p>No courses are currently available for this selection. Please contact the administrator.</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

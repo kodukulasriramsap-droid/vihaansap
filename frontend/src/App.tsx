@@ -187,6 +187,7 @@ export default function App() {
           <Route path="dashboard" element={<MentorDashboard />} />
           <Route path="courses" element={<MentorCourses />} />
           <Route path="batches/:batchId" element={<MentorBatch />} />
+          <Route path="batches/:batchId/courses" element={<MentorCourses />} />
           <Route path="batches/:batchId/*" element={<MentorBatch />} />
         </Route>
         <Route path="/admin" element={<AdminLayout />}>
