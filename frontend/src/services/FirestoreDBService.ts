@@ -80,8 +80,8 @@ export class FirestoreDBService {
 
         if (myBatchIds.length > 0) {
           const chunkedBatchIds = [];
-          for (let i = 0; i < myBatchIds.length; i += 10) {
-            chunkedBatchIds.push(myBatchIds.slice(i, i + 10));
+          for (let i = 0; i < myBatchIds.length; i += 5) {
+            chunkedBatchIds.push(myBatchIds.slice(i, i + 5));
           }
           
           for (const colName of BATCH_DEPENDENT_COLLECTIONS) {

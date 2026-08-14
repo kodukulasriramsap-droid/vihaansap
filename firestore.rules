@@ -32,9 +32,9 @@ service cloud.firestore {
 
     // ─── Batch historical content logic ───────────────────────────────────────
     function getContentDate() {
-      return ('uploadDate' in resource.data) ? resource.data.uploadDate :
-             ('createdAt' in resource.data) ? resource.data.createdAt :
-             ('date' in resource.data) ? resource.data.date :
+      return ('uploadDate' in resource.data && resource.data.uploadDate is string) ? resource.data.uploadDate :
+             ('createdAt' in resource.data && resource.data.createdAt is string) ? resource.data.createdAt :
+             ('date' in resource.data && resource.data.date is string) ? resource.data.date :
              '';
     }
 
@@ -44,8 +44,8 @@ service cloud.firestore {
       let joinDate = ('batchJoinDates' in studentData && batchId in studentData.batchJoinDates)
                      ? studentData.batchJoinDates[batchId]
                      : '';
-      // If legacy (no join date recorded), or explicitly granted, or content is newer than join date
-      return joinDate == '' || hasGrant || getContentDate() >= joinDate;
+      // If legacy (no join date recorded), explicitly granted, has timestamp/no date, or content is newer than join date
+      return joinDate == '' || hasGrant || getContentDate() == '' || getContentDate() >= joinDate;
     }
 
     // Returns true if the content targets the current user (either all-batch or selected)
