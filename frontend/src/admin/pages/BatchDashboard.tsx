@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useDB } from '../../hooks/useDB';
 import { Send, ArrowLeft, Users, Calendar, Video, FileText, CheckSquare, MessageSquare, Star, Settings, Plus, PlayCircle, Edit2, Trash2, HelpCircle, X, ChevronDown, CheckCircle, RefreshCw } from 'lucide-react';
 import { MockDB } from '../../services/MockDB';
+import { formatSafeDate } from '../../utils/formatDate';
 import ImageUploader from '../components/ImageUploader';
 import DoubtSupport from './DoubtSupport';
 import { useAuth } from '../../contexts/AuthContext';
@@ -129,7 +130,7 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
             <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">Publish Session</button>
           </div>
         </form>
-      ) : <div className="divide-y rounded-xl border bg-white">{sessions.map(s => <div key={s.id} className="p-4 flex justify-between"><div><p className="font-bold">{s.title || s.topic}</p><p className="text-sm text-slate-500">{s.platform || 'Meeting'} Â· {s.sessionDateTime ? new Date(s.sessionDateTime).toLocaleString() : `${s.date || ''} ${s.time || ''}`}</p></div><button onClick={() => { setEditing(s); setRecipientType(s.recipientType || s.recipientMode || 'all'); setRecipientIds(s.recipientIds || []); }} className="text-indigo-600 font-semibold text-sm">Edit</button></div>)}{sessions.length === 0 && <div className="p-10 text-center text-slate-500">No sessions published.</div>}</div>}
+      ) : <div className="divide-y rounded-xl border bg-white">{sessions.map(s => <div key={s.id} className="p-4 flex justify-between"><div><p className="font-bold">{s.title || s.topic}</p><p className="text-sm text-slate-500">{s.platform || 'Meeting'} · {s.sessionDateTime ? new Date(s.sessionDateTime).toLocaleString() : `${s.date || ''} ${s.time || ''}`}</p></div><button onClick={() => { setEditing(s); setRecipientType(s.recipientType || s.recipientMode || 'all'); setRecipientIds(s.recipientIds || []); }} className="text-indigo-600 font-semibold text-sm">Edit</button></div>)}{sessions.length === 0 && <div className="p-10 text-center text-slate-500">No sessions published.</div>}</div>}
 
       {/* Sync Batch History Modal */}
       {showSyncModal && (
@@ -329,7 +330,7 @@ function CourseCalendarTab({ batchId }: { batchId: string }) {
           <h3 className="text-lg font-bold text-slate-800">Course Calendar</h3>
           {syllabus.length > 0 && (
             <p className="text-xs text-slate-500 mt-1">
-              Auto-imported from <span className="font-semibold text-indigo-600">{course?.name}</span> syllabus â€¢ {completedSessions}/{totalSessions} sessions completed
+              Auto-imported from <span className="font-semibold text-indigo-600">{course?.name}</span> syllabus • {completedSessions}/{totalSessions} sessions completed
             </p>
           )}
         </div>
@@ -339,7 +340,7 @@ function CourseCalendarTab({ batchId }: { batchId: string }) {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
           <p className="text-amber-700 font-semibold text-sm">No syllabus found for this batch's course.</p>
           <p className="text-amber-600 text-xs mt-1">
-            Go to <strong>Admin â†’ Courses â†’ {batch?.course}</strong> and add syllabus topics. They will appear here automatically.
+            Go to <strong>Admin → Courses → {batch?.course}</strong> and add syllabus topics. They will appear here automatically.
           </p>
         </div>
       )}
@@ -439,7 +440,7 @@ function CourseCalendarTab({ batchId }: { batchId: string }) {
                           onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
                           className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold hover:bg-slate-200 transition-colors"
                         >
-                          {s.subTopics.length} Subtopics {expandedRow === idx ? 'â–²' : 'â–¼'}
+                          {s.subTopics.length} Subtopics {expandedRow === idx ? '▲' : '▼'}
                         </button>
                       )}
                     </div>
@@ -472,7 +473,7 @@ function CourseCalendarTab({ batchId }: { batchId: string }) {
                         }}
                         className="text-emerald-600 hover:text-emerald-800 text-xs font-bold p-1"
                       >
-                        âœ“ Done
+                        ✓ Done
                       </button>
                     )}
                   </td>
@@ -508,7 +509,7 @@ function CourseCalendarTab({ batchId }: { batchId: string }) {
                                     }}
                                     className="text-emerald-600 hover:text-emerald-800 text-[10px] font-bold p-1 bg-emerald-50 rounded"
                                   >
-                                    âœ“ Done
+                                    ✓ Done
                                   </button>
                                 )}
                               </div>
@@ -598,7 +599,7 @@ function OverviewTab({ batchId }: { batchId: string }) {
              {todaySession ? (
                <div>
                  <p className="text-sm font-bold text-indigo-600">{todaySession.title || todaySession.topic}</p>
-                 <p className="text-xs text-slate-500 mt-1">{todaySession.date} &bull; {todaySession.time}</p>
+                 <p className="text-xs text-slate-500 mt-1">{todaySession.date} • {todaySession.time}</p>
                  <span className="inline-block mt-2 px-2 py-1 bg-orange-100 text-orange-700 text-[10px] font-bold uppercase tracking-wider rounded">{todaySession.status}</span>
                </div>
              ) : (
@@ -786,7 +787,7 @@ function ReviewsFeedbackTab({ batchId }: { batchId: string }) {
                     </div>
                     <div>
                       <p className="font-bold text-slate-800 text-sm">{review.name || review.studentName || 'Student'}</p>
-                      <p className="text-xs text-slate-400">{review.createdAt ? new Date(review.createdAt).toLocaleString() : ''} &bull; {review.company ? `${review.designation} at ${review.company}` : review.course}</p>
+                      <p className="text-xs text-slate-400">{review.createdAt ? new Date(review.createdAt).toLocaleString() : ''} • {review.company ? `${review.designation} at ${review.company}` : review.course}</p>
                     </div>
                     <span className={`ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${
                       review.status === 'Approved' ? 'bg-green-100 text-green-700' :
@@ -819,8 +820,7 @@ function ReviewsFeedbackTab({ batchId }: { batchId: string }) {
         )}
       </div>
     );
-  }
-
+  };
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
@@ -1273,7 +1273,7 @@ function StudyMaterialsTab({ batchId }: { batchId: string }) {
                 </td>
                 <td className="px-4 py-4">
                   <p className="text-sm font-semibold text-slate-700">{mat.platform || mat.type || 'Legacy Link'}</p>
-                  <p className="text-xs text-slate-500">Published {mat.uploadDate || mat.createdAt}</p>
+                  <p className="text-xs text-slate-500">Published {formatSafeDate(mat.uploadDate || mat.createdAt)}</p>
                 </td>
                 <td className="px-4 py-4 text-xs text-slate-500">
                   {mat.recipientMode === 'selected' ? `${(mat.recipientIds || []).length} students` : 'All'}

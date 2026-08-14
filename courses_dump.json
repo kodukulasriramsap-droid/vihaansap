@@ -1,0 +1,1263 @@
+{
+  "documents": [
+    {
+      "name": "projects/sri-vihaan-sap-testing/databases/(default)/documents/courses/sap-abap",
+      "fields": {
+        "showSkillLevel": {
+          "booleanValue": true
+        },
+        "status": {
+          "stringValue": "Live"
+        },
+        "buttonRegisterDisabled": {
+          "booleanValue": false
+        },
+        "learningOutcomes": {
+          "arrayValue": {}
+        },
+        "isLive": {
+          "booleanValue": true
+        },
+        "description": {
+          "stringValue": "The foundation of SAP programming. Master reports, data dictionary, dialog programming, interfaces, BAPIs, and user exits."
+        },
+        "category": {
+          "stringValue": "Technical"
+        },
+        "rating": {
+          "doubleValue": 4.9
+        },
+        "buttonRegisterText": {
+          "stringValue": "Inquire Now"
+        },
+        "mode": {
+          "stringValue": "Live Virtual"
+        },
+        "showRating": {
+          "booleanValue": true
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-13T16:21:47.920Z"
+        },
+        "thumbnail": {
+          "stringValue": ""
+        },
+        "createdAt": {
+          "stringValue": "2026-07-19T18:27:54.832Z"
+        },
+        "sandboxPractice": {
+          "stringValue": "24/7 Cloud Access"
+        },
+        "showButtons": {
+          "booleanValue": true
+        },
+        "showDuration": {
+          "booleanValue": true
+        },
+        "name": {
+          "stringValue": "SAP ABAP (Advanced Business Application Programming)"
+        },
+        "syllabus": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Introduction to SAP Architecture and ABAP Workbench"
+              },
+              {
+                "stringValue": "ABAP Data Dictionary (DDIC) and Data Types"
+              },
+              {
+                "stringValue": "Basic ABAP Programming and Control Structures"
+              },
+              {
+                "stringValue": "Modularization Techniques: Includes, Subroutines, and Function Modules"
+              },
+              {
+                "stringValue": "Database Access: Open SQL and Internal Tables"
+              },
+              {
+                "stringValue": "ABAP List Viewer (ALV) Reporting"
+              },
+              {
+                "stringValue": "Dialog Programming and Screen Painter (Module Pool)"
+              },
+              {
+                "stringValue": "Object-Oriented ABAP (OO ABAP)"
+              },
+              {
+                "stringValue": "SAP Enhancements: BAPIs, BADIs, and User Exits"
+              },
+              {
+                "stringValue": "ABAP Debugging and Performance Tuning"
+              }
+            ]
+          }
+        },
+        "faqs": {
+          "arrayValue": {}
+        },
+        "id": {
+          "stringValue": "sap-abap"
+        },
+        "code": {
+          "stringValue": "ABAP"
+        },
+        "level": {
+          "stringValue": "BEGINNER"
+        },
+        "tag": {
+          "stringValue": "SAP TECHNICAL"
+        },
+        "fullDetails": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Deep dive into SAP programming syntax and internal database structures"
+              },
+              {
+                "stringValue": "Developing Object-Oriented ABAP, ALV Grid reports, and enhancement techniques"
+              },
+              {
+                "stringValue": "Data Dictionary configuration including custom database tables, structures, and views"
+              },
+              {
+                "stringValue": "Debugging applications, memory variable tracking, and performance profiling"
+              }
+            ]
+          }
+        },
+        "duration": {
+          "stringValue": "12 Weeks (Live Virtual)"
+        },
+        "banner": {
+          "stringValue": ""
+        },
+        "buttonExploreText": {
+          "stringValue": "Explore Syllabus"
+        },
+        "modules": {
+          "arrayValue": {}
+        },
+        "isUpcoming": {
+          "booleanValue": false
+        },
+        "features": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Deep dive into SAP programming syntax and internal database structures"
+              },
+              {
+                "stringValue": "Developing Object-Oriented ABAP, ALV Grid reports, and enhancement techniques"
+              },
+              {
+                "stringValue": "Data Dictionary configuration including custom database tables, structures, and views"
+              },
+              {
+                "stringValue": "Debugging applications, memory variable tracking, and performance profiling"
+              }
+            ]
+          }
+        }
+      },
+      "createTime": "2026-07-19T18:27:52.204788Z",
+      "updateTime": "2026-08-13T16:21:47.948609Z"
+    },
+    {
+      "name": "projects/sri-vihaan-sap-testing/databases/(default)/documents/courses/sap-basis",
+      "fields": {
+        "banner": {
+          "stringValue": ""
+        },
+        "fullDetails": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "System installation, client administration, and secure system landscape transport protocols"
+              },
+              {
+                "stringValue": "Application server background job monitoring and parameter optimization"
+              },
+              {
+                "stringValue": "Complete user role management, profile generation, and authorization structures"
+              },
+              {
+                "stringValue": "Database integration configuration and troubleshooting for connection failures"
+              }
+            ]
+          }
+        },
+        "duration": {
+          "stringValue": "10 Weeks (Live Virtual)"
+        },
+        "level": {
+          "stringValue": "ADVANCED"
+        },
+        "tag": {
+          "stringValue": "SAP TECHNICAL"
+        },
+        "code": {
+          "stringValue": "BASIS"
+        },
+        "id": {
+          "stringValue": "sap-basis"
+        },
+        "buttonExploreText": {
+          "stringValue": "Explore Syllabus"
+        },
+        "modules": {
+          "arrayValue": {}
+        },
+        "features": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "System installation, client administration, and secure system landscape transport protocols"
+              },
+              {
+                "stringValue": "Application server background job monitoring and parameter optimization"
+              },
+              {
+                "stringValue": "Complete user role management, profile generation, and authorization structures"
+              },
+              {
+                "stringValue": "Database integration configuration and troubleshooting for connection failures"
+              }
+            ]
+          }
+        },
+        "isUpcoming": {
+          "booleanValue": true
+        },
+        "name": {
+          "stringValue": "SAP BASIS (System Administration)"
+        },
+        "showDuration": {
+          "booleanValue": true
+        },
+        "sandboxPractice": {
+          "stringValue": "24/7 Cloud Access"
+        },
+        "showButtons": {
+          "booleanValue": true
+        },
+        "syllabus": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Introduction to SAP NetWeaver and System Architecture"
+              },
+              {
+                "stringValue": "SAP System Installation and Post-Installation Steps"
+              },
+              {
+                "stringValue": "Client Administration and System Copies"
+              },
+              {
+                "stringValue": "User Administration, Roles, and Authorizations"
+              },
+              {
+                "stringValue": "Background Job Processing and Monitoring"
+              },
+              {
+                "stringValue": "SAP Transport Management System (TMS)"
+              },
+              {
+                "stringValue": "Spool Administration and Output Management"
+              },
+              {
+                "stringValue": "Database Administration and Backup/Recovery"
+              },
+              {
+                "stringValue": "System Performance Tuning and Workload Analysis"
+              },
+              {
+                "stringValue": "SAP Security, Patches, and Kernel Upgrades"
+              }
+            ]
+          }
+        },
+        "category": {
+          "stringValue": "Technical"
+        },
+        "description": {
+          "stringValue": "Learn system administration, user authorization, security profiles, database backup patterns, system installation, and performance tuning."
+        },
+        "rating": {
+          "doubleValue": 4.8
+        },
+        "mode": {
+          "stringValue": "Live Virtual"
+        },
+        "buttonRegisterText": {
+          "stringValue": "Coming Soon"
+        },
+        "createdAt": {
+          "stringValue": "2026-07-19T18:27:54.833Z"
+        },
+        "thumbnail": {
+          "stringValue": ""
+        },
+        "updatedAt": {
+          "stringValue": "2026-07-19T18:27:54.833Z"
+        },
+        "showRating": {
+          "booleanValue": true
+        },
+        "showSkillLevel": {
+          "booleanValue": true
+        },
+        "buttonRegisterDisabled": {
+          "booleanValue": true
+        },
+        "status": {
+          "stringValue": "Upcoming"
+        },
+        "isLive": {
+          "booleanValue": false
+        }
+      },
+      "createTime": "2026-07-19T18:27:52.204788Z",
+      "updateTime": "2026-07-19T18:27:52.204788Z"
+    },
+    {
+      "name": "projects/sri-vihaan-sap-testing/databases/(default)/documents/courses/sap-fico",
+      "fields": {
+        "isLive": {
+          "booleanValue": true
+        },
+        "buttonRegisterDisabled": {
+          "booleanValue": false
+        },
+        "status": {
+          "stringValue": "Live"
+        },
+        "showSkillLevel": {
+          "booleanValue": true
+        },
+        "createdAt": {
+          "stringValue": "2026-07-19T18:27:54.828Z"
+        },
+        "thumbnail": {
+          "stringValue": ""
+        },
+        "updatedAt": {
+          "stringValue": "2026-07-19T18:27:54.828Z"
+        },
+        "showRating": {
+          "booleanValue": true
+        },
+        "mode": {
+          "stringValue": "Live Virtual"
+        },
+        "buttonRegisterText": {
+          "stringValue": "Inquire Now"
+        },
+        "rating": {
+          "doubleValue": 4.8
+        },
+        "description": {
+          "stringValue": "Master core accounting controls, general ledger, accounts payable/receivable, asset management and cost center accounting."
+        },
+        "category": {
+          "stringValue": "Functional"
+        },
+        "syllabus": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Introduction to SAP ERP and S/4HANA Finance"
+              },
+              {
+                "stringValue": "Enterprise Structure Configuration"
+              },
+              {
+                "stringValue": "Financial Accounting Global Settings (FAGS)"
+              },
+              {
+                "stringValue": "General Ledger (GL) Accounting"
+              },
+              {
+                "stringValue": "Accounts Payable (AP) and Accounts Receivable (AR)"
+              },
+              {
+                "stringValue": "Bank Accounting and Cash Management"
+              },
+              {
+                "stringValue": "Asset Accounting Configuration"
+              },
+              {
+                "stringValue": "Controlling (CO) Master Data and Cost Element Accounting"
+              },
+              {
+                "stringValue": "Cost Center and Profit Center Accounting"
+              },
+              {
+                "stringValue": "Integration with MM and SD Modules"
+              },
+              {
+                "stringValue": "Month-End and Year-End Closing Processes"
+              }
+            ]
+          }
+        },
+        "name": {
+          "stringValue": "SAP FICO (Financial & Controlling)"
+        },
+        "showButtons": {
+          "booleanValue": true
+        },
+        "sandboxPractice": {
+          "stringValue": "24/7 Cloud Access"
+        },
+        "showDuration": {
+          "booleanValue": true
+        },
+        "features": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Comprehensive accounting configuration from scratch"
+              },
+              {
+                "stringValue": "Integration configurations with SAP Material Management (MM) and Sales (SD)"
+              },
+              {
+                "stringValue": "Hands-on execution of live SAP general ledger transactions"
+              },
+              {
+                "stringValue": "Cost center allocation, month-end close, Cost Center, Profit Center, and Internal Order accounting"
+              }
+            ]
+          }
+        },
+        "isUpcoming": {
+          "booleanValue": false
+        },
+        "modules": {
+          "arrayValue": {}
+        },
+        "buttonExploreText": {
+          "stringValue": "Explore Syllabus"
+        },
+        "fullDetails": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Comprehensive accounting configuration from scratch"
+              },
+              {
+                "stringValue": "Integration configurations with SAP Material Management (MM) and Sales (SD)"
+              },
+              {
+                "stringValue": "Hands-on execution of live SAP general ledger transactions"
+              },
+              {
+                "stringValue": "Cost center allocation, month-end close, Cost Center, Profit Center, and Internal Order accounting"
+              }
+            ]
+          }
+        },
+        "duration": {
+          "stringValue": "10 Weeks (Live Virtual)"
+        },
+        "banner": {
+          "stringValue": ""
+        },
+        "id": {
+          "stringValue": "sap-fico"
+        },
+        "code": {
+          "stringValue": "FICO"
+        },
+        "tag": {
+          "stringValue": "SAP FUNCTIONAL"
+        },
+        "level": {
+          "stringValue": "BEGINNER"
+        }
+      },
+      "createTime": "2026-07-19T18:27:52.204788Z",
+      "updateTime": "2026-07-19T18:27:52.204788Z"
+    },
+    {
+      "name": "projects/sri-vihaan-sap-testing/databases/(default)/documents/courses/sap-hcm",
+      "fields": {
+        "features": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Establish human resource hierarchies and reporting dependencies"
+              },
+              {
+                "stringValue": "Configure time management schemas and shift patterns"
+              },
+              {
+                "stringValue": "Master employee master data, self-service portals and automated notification workflow"
+              },
+              {
+                "stringValue": "Remote payroll setups configuration, integration and migration payroll processes"
+              }
+            ]
+          }
+        },
+        "isUpcoming": {
+          "booleanValue": true
+        },
+        "buttonExploreText": {
+          "stringValue": "Explore Syllabus"
+        },
+        "modules": {
+          "arrayValue": {}
+        },
+        "banner": {
+          "stringValue": ""
+        },
+        "fullDetails": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Establish human resource hierarchies and reporting dependencies"
+              },
+              {
+                "stringValue": "Configure time management schemas and shift patterns"
+              },
+              {
+                "stringValue": "Master employee master data, self-service portals and automated notification workflow"
+              },
+              {
+                "stringValue": "Remote payroll setups configuration, integration and migration payroll processes"
+              }
+            ]
+          }
+        },
+        "duration": {
+          "stringValue": "8 Weeks (Live Virtual)"
+        },
+        "level": {
+          "stringValue": "INTERMEDIATE"
+        },
+        "tag": {
+          "stringValue": "SAP FUNCTIONAL"
+        },
+        "code": {
+          "stringValue": "HCM"
+        },
+        "id": {
+          "stringValue": "sap-hcm"
+        },
+        "syllabus": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Introduction to SAP Human Capital Management"
+              },
+              {
+                "stringValue": "Organizational Management (OM) Configuration"
+              },
+              {
+                "stringValue": "Personnel Administration (PA) Master Data"
+              },
+              {
+                "stringValue": "Time Management: Schedules, Quotas, and Evaluation"
+              },
+              {
+                "stringValue": "Payroll Processing and Schemas"
+              },
+              {
+                "stringValue": "Benefits Administration and Setup"
+              },
+              {
+                "stringValue": "Recruitment Process and Onboarding"
+              },
+              {
+                "stringValue": "Employee Self-Service (ESS) and Manager Self-Service (MSS)"
+              },
+              {
+                "stringValue": "Personnel Development and Talent Management"
+              },
+              {
+                "stringValue": "HCM Integration with Finance and Controlling"
+              }
+            ]
+          }
+        },
+        "name": {
+          "stringValue": "SAP HCM (Human Capital Management)"
+        },
+        "showDuration": {
+          "booleanValue": true
+        },
+        "sandboxPractice": {
+          "stringValue": "24/7 Cloud Access"
+        },
+        "showButtons": {
+          "booleanValue": true
+        },
+        "thumbnail": {
+          "stringValue": ""
+        },
+        "createdAt": {
+          "stringValue": "2026-07-19T18:27:54.833Z"
+        },
+        "updatedAt": {
+          "stringValue": "2026-07-19T18:27:54.833Z"
+        },
+        "showRating": {
+          "booleanValue": true
+        },
+        "buttonRegisterText": {
+          "stringValue": "Coming Soon"
+        },
+        "mode": {
+          "stringValue": "Live Virtual"
+        },
+        "rating": {
+          "doubleValue": 4.8
+        },
+        "category": {
+          "stringValue": "Functional"
+        },
+        "description": {
+          "stringValue": "Manage human resources, organizational design, personnel administration, recruitment workflow, and time tracking logic."
+        },
+        "isLive": {
+          "booleanValue": false
+        },
+        "buttonRegisterDisabled": {
+          "booleanValue": true
+        },
+        "status": {
+          "stringValue": "Upcoming"
+        },
+        "showSkillLevel": {
+          "booleanValue": true
+        }
+      },
+      "createTime": "2026-07-19T18:27:52.204788Z",
+      "updateTime": "2026-07-19T18:27:52.204788Z"
+    },
+    {
+      "name": "projects/sri-vihaan-sap-testing/databases/(default)/documents/courses/sap-mm",
+      "fields": {
+        "features": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "End-to-end procurement process from purchase requisition to invoice validation"
+              },
+              {
+                "stringValue": "Material requirements planning (MRP) and master data creation"
+              },
+              {
+                "stringValue": "Configuring complex purchasing formats, requests, and vendor management"
+              },
+              {
+                "stringValue": "Inventory management with cycle counting, integrated warehouse management"
+              }
+            ]
+          }
+        },
+        "isUpcoming": {
+          "booleanValue": false
+        },
+        "buttonExploreText": {
+          "stringValue": "Explore Syllabus"
+        },
+        "modules": {
+          "arrayValue": {}
+        },
+        "banner": {
+          "stringValue": ""
+        },
+        "fullDetails": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "End-to-end procurement process from purchase requisition to invoice validation"
+              },
+              {
+                "stringValue": "Material requirements planning (MRP) and master data creation"
+              },
+              {
+                "stringValue": "Configuring complex purchasing formats, requests, and vendor management"
+              },
+              {
+                "stringValue": "Inventory management with cycle counting, integrated warehouse management"
+              }
+            ]
+          }
+        },
+        "duration": {
+          "stringValue": "8 Weeks (Live Virtual)"
+        },
+        "level": {
+          "stringValue": "BEGINNER"
+        },
+        "tag": {
+          "stringValue": "SAP FUNCTIONAL"
+        },
+        "code": {
+          "stringValue": "MM"
+        },
+        "id": {
+          "stringValue": "sap-mm"
+        },
+        "syllabus": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Introduction to SAP Materials Management (MM)"
+              },
+              {
+                "stringValue": "Enterprise Structure and Organizational Units in MM"
+              },
+              {
+                "stringValue": "Master Data: Material, Vendor, and Purchasing Info Records"
+              },
+              {
+                "stringValue": "Source Determination and Procurement Process"
+              },
+              {
+                "stringValue": "Purchasing: Requisitions, Quotations, and Purchase Orders"
+              },
+              {
+                "stringValue": "Inventory Management: Goods Movements and Physical Inventory"
+              },
+              {
+                "stringValue": "Material Requirements Planning (MRP) Configuration"
+              },
+              {
+                "stringValue": "Invoice Verification and Account Determination"
+              },
+              {
+                "stringValue": "Valuation and Account Assignment"
+              },
+              {
+                "stringValue": "Integration of MM with FICO and SD"
+              }
+            ]
+          }
+        },
+        "name": {
+          "stringValue": "SAP MM (Materials Management)"
+        },
+        "showDuration": {
+          "booleanValue": true
+        },
+        "sandboxPractice": {
+          "stringValue": "24/7 Cloud Access"
+        },
+        "showButtons": {
+          "booleanValue": true
+        },
+        "thumbnail": {
+          "stringValue": ""
+        },
+        "createdAt": {
+          "stringValue": "2026-07-19T18:27:54.831Z"
+        },
+        "updatedAt": {
+          "stringValue": "2026-07-19T18:27:54.831Z"
+        },
+        "showRating": {
+          "booleanValue": true
+        },
+        "rating": {
+          "doubleValue": 4.7
+        },
+        "mode": {
+          "stringValue": "Live Virtual"
+        },
+        "buttonRegisterText": {
+          "stringValue": "Inquire Now"
+        },
+        "category": {
+          "stringValue": "Functional"
+        },
+        "description": {
+          "stringValue": "Learn complete procurement lifecycle, inventory management, purchasing workflow, material requirements planning (MRP), and invoice verification."
+        },
+        "isLive": {
+          "booleanValue": true
+        },
+        "buttonRegisterDisabled": {
+          "booleanValue": false
+        },
+        "status": {
+          "stringValue": "Live"
+        },
+        "showSkillLevel": {
+          "booleanValue": true
+        }
+      },
+      "createTime": "2026-07-19T18:27:52.204788Z",
+      "updateTime": "2026-07-19T18:27:52.204788Z"
+    },
+    {
+      "name": "projects/sri-vihaan-sap-testing/databases/(default)/documents/courses/sap-pp",
+      "fields": {
+        "syllabus": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Introduction to SAP Production Planning"
+              },
+              {
+                "stringValue": "Enterprise Structure and PP Master Data"
+              },
+              {
+                "stringValue": "Bill of Materials (BOM) and Routing Configuration"
+              },
+              {
+                "stringValue": "Work Centers and Capacity Planning"
+              },
+              {
+                "stringValue": "Sales and Operations Planning (SOP)"
+              },
+              {
+                "stringValue": "Demand Management and Planned Independent Requirements"
+              },
+              {
+                "stringValue": "Material Requirements Planning (MRP) and MPS"
+              },
+              {
+                "stringValue": "Production Order Execution and Control"
+              },
+              {
+                "stringValue": "Discrete, Repetitive, and Process Manufacturing (PI) Overview"
+              },
+              {
+                "stringValue": "PP Integration with MM, SD, and FICO"
+              }
+            ]
+          }
+        },
+        "showButtons": {
+          "booleanValue": true
+        },
+        "sandboxPractice": {
+          "stringValue": "24/7 Cloud Access"
+        },
+        "showDuration": {
+          "booleanValue": true
+        },
+        "name": {
+          "stringValue": "SAP PP (Production Planning)"
+        },
+        "id": {
+          "stringValue": "sap-pp"
+        },
+        "code": {
+          "stringValue": "PP"
+        },
+        "level": {
+          "stringValue": "INTERMEDIATE"
+        },
+        "tag": {
+          "stringValue": "SAP FUNCTIONAL"
+        },
+        "fullDetails": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Define production routing configuration and bills of material"
+              },
+              {
+                "stringValue": "Configure Material Requirements Planning (MRP) calculations and capacity checks"
+              },
+              {
+                "stringValue": "Execute assembly operations, batch flushing, and material sourcing plans"
+              },
+              {
+                "stringValue": "Support Discrete, Repetitive, and Kanban manufacturing configurations"
+              }
+            ]
+          }
+        },
+        "duration": {
+          "stringValue": "8 Weeks (Live Virtual)"
+        },
+        "banner": {
+          "stringValue": ""
+        },
+        "isUpcoming": {
+          "booleanValue": true
+        },
+        "features": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Define production routing configuration and bills of material"
+              },
+              {
+                "stringValue": "Configure Material Requirements Planning (MRP) calculations and capacity checks"
+              },
+              {
+                "stringValue": "Execute assembly operations, batch flushing, and material sourcing plans"
+              },
+              {
+                "stringValue": "Support Discrete, Repetitive, and Kanban manufacturing configurations"
+              }
+            ]
+          }
+        },
+        "modules": {
+          "arrayValue": {}
+        },
+        "buttonExploreText": {
+          "stringValue": "Explore Syllabus"
+        },
+        "status": {
+          "stringValue": "Upcoming"
+        },
+        "buttonRegisterDisabled": {
+          "booleanValue": true
+        },
+        "showSkillLevel": {
+          "booleanValue": true
+        },
+        "isLive": {
+          "booleanValue": false
+        },
+        "description": {
+          "stringValue": "Master manufacturing processes, bills of materials (BOM), routing details, production orders, and capacity planning parameters."
+        },
+        "category": {
+          "stringValue": "Functional"
+        },
+        "updatedAt": {
+          "stringValue": "2026-07-19T18:27:54.834Z"
+        },
+        "showRating": {
+          "booleanValue": true
+        },
+        "thumbnail": {
+          "stringValue": ""
+        },
+        "createdAt": {
+          "stringValue": "2026-07-19T18:27:54.834Z"
+        },
+        "rating": {
+          "doubleValue": 4.5
+        },
+        "mode": {
+          "stringValue": "Live Virtual"
+        },
+        "buttonRegisterText": {
+          "stringValue": "Coming Soon"
+        }
+      },
+      "createTime": "2026-07-19T18:27:52.204788Z",
+      "updateTime": "2026-07-19T18:27:52.204788Z"
+    },
+    {
+      "name": "projects/sri-vihaan-sap-testing/databases/(default)/documents/courses/sap-sd",
+      "fields": {
+        "description": {
+          "stringValue": "Optimize order-to-cash process, customer partner determination, logistics execution, shipping operations, and customer billing routines."
+        },
+        "category": {
+          "stringValue": "Functional"
+        },
+        "showRating": {
+          "booleanValue": true
+        },
+        "updatedAt": {
+          "stringValue": "2026-07-19T18:27:54.832Z"
+        },
+        "thumbnail": {
+          "stringValue": ""
+        },
+        "createdAt": {
+          "stringValue": "2026-07-19T18:27:54.832Z"
+        },
+        "mode": {
+          "stringValue": "Live Virtual"
+        },
+        "buttonRegisterText": {
+          "stringValue": "Inquire Now"
+        },
+        "rating": {
+          "doubleValue": 4.9
+        },
+        "status": {
+          "stringValue": "Live"
+        },
+        "buttonRegisterDisabled": {
+          "booleanValue": false
+        },
+        "showSkillLevel": {
+          "booleanValue": true
+        },
+        "isLive": {
+          "booleanValue": true
+        },
+        "id": {
+          "stringValue": "sap-sd"
+        },
+        "code": {
+          "stringValue": "SD"
+        },
+        "tag": {
+          "stringValue": "SAP FUNCTIONAL"
+        },
+        "level": {
+          "stringValue": "BEGINNER"
+        },
+        "duration": {
+          "stringValue": "9 Weeks (Live Virtual)"
+        },
+        "fullDetails": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Analyze the complete Order-To-Cash (OTC) sales cycle"
+              },
+              {
+                "stringValue": "Master material scheduling, transportation planning, and shipment partner functions"
+              },
+              {
+                "stringValue": "Integrated pricing rules, conditional taxes, and discounts"
+              },
+              {
+                "stringValue": "Integration seamlessly with SAP FI/CO for instant revenue postings"
+              }
+            ]
+          }
+        },
+        "banner": {
+          "stringValue": ""
+        },
+        "isUpcoming": {
+          "booleanValue": false
+        },
+        "features": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Analyze the complete Order-To-Cash (OTC) sales cycle"
+              },
+              {
+                "stringValue": "Master material scheduling, transportation planning, and shipment partner functions"
+              },
+              {
+                "stringValue": "Integrated pricing rules, conditional taxes, and discounts"
+              },
+              {
+                "stringValue": "Integration seamlessly with SAP FI/CO for instant revenue postings"
+              }
+            ]
+          }
+        },
+        "buttonExploreText": {
+          "stringValue": "Explore Syllabus"
+        },
+        "modules": {
+          "arrayValue": {}
+        },
+        "syllabus": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Introduction to SAP Sales and Distribution"
+              },
+              {
+                "stringValue": "SD Enterprise Structure and Master Data"
+              },
+              {
+                "stringValue": "Order-to-Cash (O2C) Cycle and Sales Document Processing"
+              },
+              {
+                "stringValue": "Pricing Procedures and Condition Techniques"
+              },
+              {
+                "stringValue": "Item Category and Schedule Line Category Determination"
+              },
+              {
+                "stringValue": "Delivery Processing and Logistics Execution"
+              },
+              {
+                "stringValue": "Billing Processes and Invoice Creation"
+              },
+              {
+                "stringValue": "Credit Management and Risk Control"
+              },
+              {
+                "stringValue": "Output Management and Partner Determination"
+              },
+              {
+                "stringValue": "SD Integration with MM and FICO"
+              }
+            ]
+          }
+        },
+        "showButtons": {
+          "booleanValue": true
+        },
+        "sandboxPractice": {
+          "stringValue": "24/7 Cloud Access"
+        },
+        "showDuration": {
+          "booleanValue": true
+        },
+        "name": {
+          "stringValue": "SAP SD (Sales & Distribution)"
+        }
+      },
+      "createTime": "2026-07-19T18:27:52.204788Z",
+      "updateTime": "2026-07-19T18:27:52.204788Z"
+    },
+    {
+      "name": "projects/sri-vihaan-sap-testing/databases/(default)/documents/courses/sap-successfactors",
+      "fields": {
+        "category": {
+          "stringValue": "Cloud"
+        },
+        "description": {
+          "stringValue": "Implement modern cloud-hosted Human Capital Management. Cover Employee Central, performance tracking, dynamic goals, and cloud learning systems."
+        },
+        "showRating": {
+          "booleanValue": true
+        },
+        "updatedAt": {
+          "stringValue": "2026-07-19T18:27:54.835Z"
+        },
+        "createdAt": {
+          "stringValue": "2026-07-19T18:27:54.835Z"
+        },
+        "thumbnail": {
+          "stringValue": ""
+        },
+        "buttonRegisterText": {
+          "stringValue": "Coming Soon"
+        },
+        "mode": {
+          "stringValue": "Live Virtual"
+        },
+        "rating": {
+          "doubleValue": 4.9
+        },
+        "status": {
+          "stringValue": "Upcoming"
+        },
+        "buttonRegisterDisabled": {
+          "booleanValue": true
+        },
+        "showSkillLevel": {
+          "booleanValue": true
+        },
+        "isLive": {
+          "booleanValue": false
+        },
+        "level": {
+          "stringValue": "INTERMEDIATE"
+        },
+        "tag": {
+          "stringValue": "SAP CLOUD"
+        },
+        "code": {
+          "stringValue": "SUCCESSFACTORS"
+        },
+        "id": {
+          "stringValue": "sap-successfactors"
+        },
+        "banner": {
+          "stringValue": ""
+        },
+        "fullDetails": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Learn cloud HR setups, Employee Central models, and role permissions setup"
+              },
+              {
+                "stringValue": "Configure employee lifecycle transactions and automated notification workflow"
+              },
+              {
+                "stringValue": "Design performance goals management and cloud learning content management"
+              }
+            ]
+          }
+        },
+        "duration": {
+          "stringValue": "10 Weeks (Live Virtual)"
+        },
+        "isUpcoming": {
+          "booleanValue": true
+        },
+        "features": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Learn cloud HR setups, Employee Central models, and role permissions setup"
+              },
+              {
+                "stringValue": "Configure employee lifecycle transactions and automated notification workflow"
+              },
+              {
+                "stringValue": "Design performance goals management and cloud learning content management"
+              }
+            ]
+          }
+        },
+        "buttonExploreText": {
+          "stringValue": "Explore Syllabus"
+        },
+        "modules": {
+          "arrayValue": {}
+        },
+        "syllabus": {
+          "arrayValue": {
+            "values": [
+              {
+                "stringValue": "Introduction to Cloud HR and SuccessFactors Architecture"
+              },
+              {
+                "stringValue": "Employee Central (EC) Core Configuration"
+              },
+              {
+                "stringValue": "Role-Based Permissions (RBP) and Security"
+              },
+              {
+                "stringValue": "Foundation Objects and Corporate Data Models"
+              },
+              {
+                "stringValue": "Performance and Goals Management (PMGM)"
+              },
+              {
+                "stringValue": "Compensation Management and Variable Pay"
+              },
+              {
+                "stringValue": "Recruiting Management (RCM) and Onboarding"
+              },
+              {
+                "stringValue": "Learning Management System (LMS) Administration"
+              },
+              {
+                "stringValue": "Succession Planning and Career Development"
+              },
+              {
+                "stringValue": "Reporting, Analytics, and SAP HCM Integration"
+              }
+            ]
+          }
+        },
+        "showDuration": {
+          "booleanValue": true
+        },
+        "sandboxPractice": {
+          "stringValue": "24/7 Cloud Access"
+        },
+        "showButtons": {
+          "booleanValue": true
+        },
+        "name": {
+          "stringValue": "SAP SuccessFactors (Cloud HR)"
+        }
+      },
+      "createTime": "2026-07-19T18:27:52.204788Z",
+      "updateTime": "2026-07-19T18:27:52.204788Z"
+    }
+  ]
+}

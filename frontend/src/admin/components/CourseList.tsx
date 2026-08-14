@@ -3,6 +3,7 @@ import { Edit2, Trash2, Copy, Search, Filter } from 'lucide-react';
 import { useDB } from '../../hooks/useDB';
 import { MockDB } from '../../services/MockDB';
 import { ArrowUp, ArrowDown } from 'lucide-react';
+import { formatSafeDate } from '../../utils/formatDate';
 
 interface CourseListProps {
   onEdit: (course: any) => void;
@@ -110,7 +111,7 @@ export default function CourseList({ onEdit, onDuplicate, onDelete }: CourseList
                     {getStudentsCount(course.name)}
                   </td>
                   <td className="px-6 py-4 text-xs text-slate-500">
-                    {course.updatedAt || 'Just now'}
+                    {formatSafeDate(course.updatedAt)}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
                     <button onClick={() => onEdit(course)} className="p-2 text-slate-400 hover:text-[#1763B6] rounded-lg hover:bg-blue-50" title="Edit">
