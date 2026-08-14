@@ -15,8 +15,8 @@ export default function CourseList({ onEdit, onDuplicate, onDelete }: CourseList
   const [search, setSearch] = useState('');
 
   const filtered = db.courses.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase()) || 
-    c.code.toLowerCase().includes(search.toLowerCase())
+    (c.name || '').toLowerCase().includes(search.toLowerCase()) || 
+    (c.code || '').toLowerCase().includes(search.toLowerCase())
   );
 
   
