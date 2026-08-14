@@ -3,7 +3,6 @@ import { X, Save, Plus, Trash2, ArrowLeft, GripVertical, ArrowUp, ArrowDown } fr
 import { useDB } from '../../hooks/useDB';
 import { MockDB } from '../../services/MockDB';
 import { SAP_COURSES } from '../../data';
-import ImageUploader from './ImageUploader';
 
 interface CourseBuilderProps {
   initialData: any;
@@ -54,7 +53,7 @@ export default function CourseBuilder({ initialData, onClose, onSave }: CourseBu
   const handleArrayRemove = (field: string, index: number) => {
     setFormData((prev: any) => ({
       ...prev,
-      [field]: prev[field].filter((_: any, i: number) => i !== index)
+      [field]: (prev[field] || []).filter((_: any, i: number) => i !== index)
     }));
   };
 
@@ -447,16 +446,18 @@ export default function CourseBuilder({ initialData, onClose, onSave }: CourseBu
                       <input type="text" name="mentorExperience" value={formData.mentorExperience || ''} onChange={handleChange} placeholder="e.g. 15+ Years" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1763B6]/20 outline-none" />
                     </div>
                     <div>
-                      <ImageUploader
-                        label="Mentor Photo"
+                      <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Mentor Photo URL</label>
+                      <input
+                        type="text"
+                        name="mentorPhoto"
                         value={formData.mentorPhoto || ''}
-                        onChange={(url) => setFormData((prev: any) => ({ ...prev, mentorPhoto: url }))}
-                        folder="mentors"
-                        maxDimension={600}
-                        recommendedSize="600 × 600 px"
-                        recommendedFormat="Square PNG/JPG"
-                        previewClassName="w-24 h-24 object-cover rounded-full"
+                        onChange={handleChange}
+                        placeholder="https://example.com/photo.jpg"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1763B6]/20 outline-none"
                       />
+                      {formData.mentorPhoto && (
+                        <img src={formData.mentorPhoto} alt="Mentor" className="mt-2 w-16 h-16 rounded-full object-cover border border-slate-200" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      )}
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Short Bio</label>
@@ -485,20 +486,20 @@ export default function CourseBuilder({ initialData, onClose, onSave }: CourseBu
                         <div className="space-y-3 pr-8">
                           <input 
                             type="text" 
-                            value={faq.question}
+                            value={faq.question || ''}
                             onChange={(e) => {
-                              const newFaqs = [...formData.faqs];
-                              newFaqs[idx].question = e.target.value;
+                              const newFaqs = [...(formData.faqs || [])];
+                              newFaqs[idx] = { ...newFaqs[idx], question: e.target.value };
                               setFormData({ ...formData, faqs: newFaqs });
                             }}
                             className="w-full font-bold text-slate-800 bg-white px-3 py-2 rounded border border-slate-200 text-sm outline-none"
                             placeholder="Question"
                           />
                           <textarea 
-                            value={faq.answer}
+                            value={faq.answer || ''}
                             onChange={(e) => {
-                              const newFaqs = [...formData.faqs];
-                              newFaqs[idx].answer = e.target.value;
+                              const newFaqs = [...(formData.faqs || [])];
+                              newFaqs[idx] = { ...newFaqs[idx], answer: e.target.value };
                               setFormData({ ...formData, faqs: newFaqs });
                             }}
                             className="w-full text-slate-600 bg-white px-3 py-2 rounded border border-slate-200 text-sm outline-none"
