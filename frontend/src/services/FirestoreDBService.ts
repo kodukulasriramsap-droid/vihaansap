@@ -248,18 +248,17 @@ export class FirestoreDBService {
     // 2. Students receive only the collections used by their portal. Admins
     // retain the existing full administrative subscriptions.
     const BATCH_DEPENDENT_COLLECTIONS = ['batchPlanner', 'batchSessions', 'liveClasses', 'studyMaterials', 'schedules', 'recordings', 'assignments'];
-    const STUDENT_COLLECTIONS = new Set(['reviews', 'reviewCampaigns', 'notifications', 'events', 'courses', 'blogs', 'faqs', 'courseRatings']);
+    const STUDENT_COLLECTIONS = new Set(['reviews', 'reviewCampaigns', 'events', 'courses', 'blogs', 'faqs', 'courseRatings']);
     for (const colName of COLLECTIONS_TO_SYNC) {
       if (!isAdmin && colName === 'batches') continue; // Handled specially above for students
       if (!isAdmin && BATCH_DEPENDENT_COLLECTIONS.includes(colName)) continue; // Handled specially for students
+      if (!isAdmin && colName === 'notifications') continue; // Handled specially below
+      if (!isAdmin && colName === 'reviewCampaigns') continue; // Handled specially below
       if (!isAdmin && !STUDENT_COLLECTIONS.has(colName)) continue;
       
       const colRef = collection(db, colName as string);
-      const collectionQuery = !isAdmin && (colName === 'notifications' || colName === 'reviewCampaigns')
-        ? query(colRef, where('recipientIds', 'array-contains', user.uid))
-        : colRef;
       const unsub = onSnapshot(
-        collectionQuery,
+        colRef,
         (snapshot) => {
           const firestoreData: any[] = snapshot.docs.map((d) => ({
             id: d.id,
@@ -275,6 +274,98 @@ export class FirestoreDBService {
         }
       );
       this.unsubscribers.push(unsub);
+    }
+
+    // ── Notifications: multi-query merge to cover all targeting scenarios ──────
+    // Students must see:
+    //   1. Notifications explicitly listing their UID in recipientIds
+    //   2. Batch-level notifications (target='Batch') for their enrolled batches
+    //   3. Global notifications (target='Everyone' or target='Students')
+    // reviewCampaigns: only those listing the student's UID
+    if (!isAdmin) {
+      const notifMerger = new Map<string, any>();
+      const updateNotifications = (key: string, docs: any[]) => {
+        const existing = notifMerger.get(key) ?? new Map<string, any>();
+        docs.forEach(d => existing.set(d.id, d));
+        notifMerger.set(key, existing);
+        const merged = new Map<string, any>();
+        notifMerger.forEach(m => m.forEach((v, k) => merged.set(k, v)));
+        const currentDb = MockDB.get();
+        (currentDb['notifications'] as any[]) = Array.from(merged.values());
+        MockDB.set(currentDb);
+      };
+
+      const notifColRef = collection(db, 'notifications');
+
+      // Q-notif-1: Notifications explicitly addressed to this student
+      const qNotifDirect = query(notifColRef, where('recipientIds', 'array-contains', user.uid));
+      this.unsubscribers.push(onSnapshot(qNotifDirect,
+        snap => updateNotifications('direct', snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        err => console.error('[FirestoreDBService] Error syncing notifications (direct):', err)
+      ));
+
+      // Q-notif-2: Global notifications for all students
+      const qNotifEveryone = query(notifColRef, where('target', '==', 'Everyone'));
+      this.unsubscribers.push(onSnapshot(qNotifEveryone,
+        snap => updateNotifications('everyone', snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        err => console.error('[FirestoreDBService] Error syncing notifications (everyone):', err)
+      ));
+
+      // Q-notif-3: Notifications targeting all students
+      const qNotifStudents = query(notifColRef, where('target', '==', 'Students'));
+      this.unsubscribers.push(onSnapshot(qNotifStudents,
+        snap => updateNotifications('students', snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        err => console.error('[FirestoreDBService] Error syncing notifications (students):', err)
+      ));
+
+      // Q-notif-4 to N: Batch notifications for each of the student's enrolled batches
+      // We subscribe via a reactive listener — the batch IDs come from the batches subscription above.
+      // We use a post-batch-fetch approach: after we know myBatchIds, we subscribe to batch notifications.
+      // This is done inline within updateDependentSubscriptions above by adding notification logic there.
+      // For now, we also subscribe based on the batches query results reactively below.
+      // Use the same updateDependentSubscriptions batches result to also fetch batch notifications.
+      // We do this via a fresh array-contains-any query split into chunks of 10:
+      const batchNotifColRef = collection(db, 'notifications');
+      let notifBatchUnsubscribers: (() => void)[] = [];
+
+      const updateBatchNotifications = (myBatchIds: string[]) => {
+        notifBatchUnsubscribers.forEach(u => u());
+        notifBatchUnsubscribers = [];
+        if (myBatchIds.length === 0) return;
+
+        const chunks: string[][] = [];
+        for (let i = 0; i < myBatchIds.length; i += 10) chunks.push(myBatchIds.slice(i, i + 10));
+
+        chunks.forEach((chunk, idx) => {
+          const qBatchNotif = query(batchNotifColRef, where('targetId', 'in', chunk), where('target', '==', 'Batch'));
+          const unsub = onSnapshot(qBatchNotif,
+            snap => updateNotifications(`batch-${idx}`, snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+            err => console.error('[FirestoreDBService] Error syncing notifications (batch):', err)
+          );
+          notifBatchUnsubscribers.push(unsub);
+        });
+      };
+
+      // Watch the batches subscription to reactively update batch notifications
+      const batchesWatchQuery = query(collection(db, 'batches'), where('studentIds', 'array-contains', user.uid));
+      const unsubBatchWatch = onSnapshot(batchesWatchQuery, (snap) => {
+        const batchIds = snap.docs.map(d => d.id);
+        updateBatchNotifications(batchIds);
+      }, err => console.error('[FirestoreDBService] Error watching batches for notifications:', err));
+      this.unsubscribers.push(unsubBatchWatch);
+      this.unsubscribers.push(() => notifBatchUnsubscribers.forEach(u => u()));
+
+      // reviewCampaigns: only where student is a recipient
+      const rcColRef = collection(db, 'reviewCampaigns');
+      const qRC = query(rcColRef, where('recipientIds', 'array-contains', user.uid));
+      this.unsubscribers.push(onSnapshot(qRC,
+        snap => {
+          const currentDb = MockDB.get();
+          (currentDb['reviewCampaigns'] as any[]) = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          MockDB.set(currentDb);
+        },
+        err => console.error('[FirestoreDBService] Error syncing reviewCampaigns:', err)
+      ));
     }
 
     const websiteConfigUnsubscribe = onSnapshot(doc(db, 'config', 'website'), (snapshot) => {

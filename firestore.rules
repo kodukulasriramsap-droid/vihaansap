@@ -49,15 +49,27 @@ service cloud.firestore {
     }
 
     // Returns true if the content targets the current user (either all-batch or selected)
+    // IMPORTANT: We split this into two cases to avoid double get() per document:
+    //   Case 1: Direct recipient targeting (uid in recipientIds) — only enrollment check needed.
+    //   Case 2: Visibility/mode based access — enrollment + historical eligibility.
+    //   Case 3: Legacy visibility fields (Students/Everyone) — only enrollment check needed.
+    //           These are explicitly published to all batch students; no historical gating required.
     function isBatchContentVisibleToMe(batchId) {
       return isEnrolledInBatch(batchId) && (
-        request.auth.uid in resource.data.recipientIds ||
+        // Direct recipient: uid is explicitly listed
+        request.auth.uid in resource.data.recipientIds
+        ||
+        // Visibility-based (legacy targeting used in recordings/materials)
+        // Only one get() needed (isEnrolledInBatch above)
+        resource.data.visibility == 'Students'
+        ||
+        resource.data.visibility == 'Everyone'
+        ||
+        // Mode/type-based with historical eligibility (2 gets, but only for these fields)
         (
           (
             resource.data.recipientMode == 'all' ||
             resource.data.recipientType == 'all' ||
-            resource.data.visibility == 'Students' ||
-            resource.data.visibility == 'Everyone' ||
             (!('recipientMode' in resource.data) && !('recipientType' in resource.data) && !('visibility' in resource.data))
           ) && isHistoricallyEligible(batchId)
         )
