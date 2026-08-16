@@ -114,27 +114,33 @@ export class FirestoreDBService {
               } else {
                 // Student logic: requires merging of visibility rules
                 const mergerState = new Map<string, any>();
-                const mergeDocs = (docs: any[]) => {
+                const mergeDocs = (docs: any[], queryName: string) => {
+                  console.log(`[DEBUG ${colName}] ${queryName} returned ${docs.length} docs for chunks:`, chunk);
+                  if (docs.length > 0) {
+                    console.log(`[DEBUG ${colName}] ${queryName} doc IDs:`, docs.map(d => d.id));
+                  }
                   docs.forEach(d => mergerState.set(d.id, d));
                   const currentDb = MockDB.get();
-                  (currentDb[colName as 'studyMaterials' | 'recordings'] as any[]) = Array.from(mergerState.values());
+                  const finalDocs = Array.from(mergerState.values());
+                  (currentDb[colName as 'studyMaterials' | 'recordings'] as any[]) = finalDocs;
                   MockDB.set(currentDb);
+                  console.log(`[DEBUG ${colName}] MockDB now has ${finalDocs.length} total docs for this chunk.`);
                 };
 
                 const q1 = query(colRef, where('batchId', 'in', chunk), where('recipientMode', '==', 'all'));
-                dependentUnsubscribers.push(onSnapshot(q1, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q1:`, err)));
+                dependentUnsubscribers.push(onSnapshot(q1, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() })), 'Q1'), err => console.error(`Sync error ${colName} Q1:`, err)));
 
                 const q2 = query(colRef, where('batchId', 'in', chunk), where('recipientType', '==', 'all'));
-                dependentUnsubscribers.push(onSnapshot(q2, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q2:`, err)));
+                dependentUnsubscribers.push(onSnapshot(q2, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() })), 'Q2'), err => console.error(`Sync error ${colName} Q2:`, err)));
 
                 const q3 = query(colRef, where('batchId', 'in', chunk), where('recipientIds', 'array-contains', user.uid));
-                dependentUnsubscribers.push(onSnapshot(q3, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q3:`, err)));
+                dependentUnsubscribers.push(onSnapshot(q3, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() })), 'Q3'), err => console.error(`Sync error ${colName} Q3:`, err)));
 
                 const q4 = query(colRef, where('batchId', 'in', chunk), where('visibility', '==', 'Students'));
-                dependentUnsubscribers.push(onSnapshot(q4, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q4:`, err)));
+                dependentUnsubscribers.push(onSnapshot(q4, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() })), 'Q4'), err => console.error(`Sync error ${colName} Q4:`, err)));
 
                 const q5 = query(colRef, where('batchId', 'in', chunk), where('visibility', '==', 'Everyone'));
-                dependentUnsubscribers.push(onSnapshot(q5, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => console.error(`Sync error ${colName} Q5:`, err)));
+                dependentUnsubscribers.push(onSnapshot(q5, snap => mergeDocs(snap.docs.map(d => ({ id: d.id, ...d.data() })), 'Q5'), err => console.error(`Sync error ${colName} Q5:`, err)));
               }
             }
           }

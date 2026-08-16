@@ -12,9 +12,13 @@ export default function StudyMaterials() {
   const db = useDB();
 
   const { activeBatch } = useActiveBatch();
-  const studyMaterials = db.studyMaterials?.filter(m => 
-    m.batchId === activeBatch?.id && m.visibility !== 'Hidden' && isTargetedToStudent(m, studentProfile)
-  ).sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()) || [];
+  console.log('[DEBUG StudyMaterials] Initial db.studyMaterials:', db.studyMaterials?.map(m => m.id));
+  const studyMaterials = db.studyMaterials?.filter(m => {
+    const isTargeted = isTargetedToStudent(m, studentProfile);
+    const inBatch = m.batchId === activeBatch?.id;
+    console.log(`[DEBUG StudyMaterials] Filtering ${m.id}: inBatch=${inBatch}, isTargeted=${isTargeted}`);
+    return inBatch && isTargeted && m.visibility !== 'Hidden';
+  }).sort((a, b) => new Date(b.uploadDate || 0).getTime() - new Date(a.uploadDate || 0).getTime()) || [];
 
   useEffect(() => {
     if (studyMaterials.length > 0) {

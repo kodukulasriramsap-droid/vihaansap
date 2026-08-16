@@ -23,9 +23,14 @@ export default function RecordedClasses() {
   }));
 
   // 2. Standalone uploaded recordings
-  const standaloneRecordings = db.recordings?.filter(r => 
-    r.batchId === activeBatch?.id && r.visibility !== 'Hidden' && isTargetedToStudent(r, studentProfile)
-  ).map(r => ({
+  console.log('[DEBUG RecordedClasses] Initial db.recordings:', db.recordings?.map(r => r.id));
+  const standaloneRecordings = db.recordings?.filter(r => {
+    const isTargeted = isTargetedToStudent(r, studentProfile);
+    const inBatch = r.batchId === activeBatch?.id;
+    const notHidden = r.visibility !== 'Hidden';
+    console.log(`[DEBUG RecordedClasses] Filtering ${r.id}: inBatch=${inBatch}, notHidden=${notHidden}, isTargeted=${isTargeted}`);
+    return inBatch && notHidden && isTargeted;
+  }).map(r => ({
     id: r.id,
     topic: r.title,
     date: r.date || r.uploadDate,

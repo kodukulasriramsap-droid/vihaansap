@@ -27,8 +27,8 @@ export const isTargetedToStudent = (item: RecipientTarget, student: any) => {
   const batchId = item.batchId;
   const contentDate = item.uploadDate || item.createdAt || item.date || '';
   
-  const hasGrant = batchId && student.grantedHistoricalBatches?.includes(batchId);
-  const joinDate = (batchId && student.batchJoinDates && student.batchJoinDates[batchId]) || '';
+  const hasGrant = batchId && student?.grantedHistoricalBatches?.includes(batchId);
+  const joinDate = (batchId && student?.batchJoinDates && student?.batchJoinDates[batchId]) || '';
   
   // If legacy (no join date recorded), or explicitly granted, or content is newer than join date
   if (joinDate === '' || hasGrant || (contentDate && contentDate >= joinDate)) {
