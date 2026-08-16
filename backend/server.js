@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = require('./src/app');
+const { initDoubtsListener } = require('./src/services/doubtListener.service');
 
 const PORT = process.env.PORT || 5000;
 
@@ -11,4 +12,8 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Node ENV: ${process.env.NODE_ENV}`);
   console.log(`Firebase Project ID: ${process.env.FIREBASE_PROJECT_ID || 'NOT SET - check Render env vars'}`);
+  
+  // Initialize Firestore background listeners
+  initDoubtsListener();
 });
+
