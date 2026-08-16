@@ -82,10 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setPersistence(auth, browserLocalPersistence).catch((error) => {
-      console.error('Auth persistence error:', error);
-    });
-
     // Track whether Firestore collection listeners have been started.
     // FirestoreDBService manages its own unsubscribers internally.
     let firestoreStarted = false;
