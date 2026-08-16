@@ -141,7 +141,46 @@ export class FirestoreDBService {
         }
       };
 
+      // ── Batch notifications updater ─────────────────────────────────────────
+      // Declared here so it is in scope for both the mentor and student branches.
+      // Called from the batches onSnapshot, keeping batch-level notification
+      // subscriptions reactive to batch membership changes without a second
+      // duplicate batches watcher.
+      const batchNotifColRef = collection(db, 'notifications');
+      let notifBatchUnsubscribers: (() => void)[] = [];
+      this.unsubscribers.push(() => notifBatchUnsubscribers.forEach(u => u()));
+
+      const updateBatchNotifications = (myBatchIds: string[]) => {
+        notifBatchUnsubscribers.forEach(u => u());
+        notifBatchUnsubscribers = [];
+        if (myBatchIds.length === 0) return;
+
+        const chunks: string[][] = [];
+        for (let i = 0; i < myBatchIds.length; i += 10) chunks.push(myBatchIds.slice(i, i + 10));
+
+        chunks.forEach((chunk, idx) => {
+          const qBatchNotif = query(batchNotifColRef, where('targetId', 'in', chunk), where('target', '==', 'Batch'));
+          const unsub = onSnapshot(qBatchNotif,
+            snap => {
+              // updateNotifications is declared below in the !isAdmin notifications block.
+              // We defer to MockDB directly here for batch notifications.
+              const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+              const currentDb = MockDB.get();
+              const existingNotifs = (currentDb['notifications'] as any[]) || [];
+              const batchNotifIds = new Set(docs.map((d: any) => d.id));
+              // Remove old batch notifications for this chunk and add new ones
+              const filtered = existingNotifs.filter((n: any) => !(n.target === 'Batch' && chunk.includes(n.targetId)));
+              (currentDb['notifications'] as any[]) = [...filtered, ...docs];
+              MockDB.set(currentDb);
+            },
+            err => console.error(`[FirestoreDBService] Error syncing notifications (batch-${idx}):`, err)
+          );
+          notifBatchUnsubscribers.push(unsub);
+        });
+      };
+
       if (isMentor) {
+
         const { doc } = await import('firebase/firestore');
         const mentorId = user.email ? user.email.trim().toLowerCase() : user.uid;
         const mentorDocRef = doc(db, 'mentors', mentorId);
@@ -195,6 +234,7 @@ export class FirestoreDBService {
           
           const myBatchIds = myBatches.map(b => b.id);
           updateDependentSubscriptions(myBatchIds);
+          updateBatchNotifications(myBatchIds);
         });
         
         this.unsubscribers.push(unsubBatches);
@@ -317,43 +357,6 @@ export class FirestoreDBService {
         snap => updateNotifications('students', snap.docs.map(d => ({ id: d.id, ...d.data() }))),
         err => console.error('[FirestoreDBService] Error syncing notifications (students):', err)
       ));
-
-      // Q-notif-4 to N: Batch notifications for each of the student's enrolled batches
-      // We subscribe via a reactive listener — the batch IDs come from the batches subscription above.
-      // We use a post-batch-fetch approach: after we know myBatchIds, we subscribe to batch notifications.
-      // This is done inline within updateDependentSubscriptions above by adding notification logic there.
-      // For now, we also subscribe based on the batches query results reactively below.
-      // Use the same updateDependentSubscriptions batches result to also fetch batch notifications.
-      // We do this via a fresh array-contains-any query split into chunks of 10:
-      const batchNotifColRef = collection(db, 'notifications');
-      let notifBatchUnsubscribers: (() => void)[] = [];
-
-      const updateBatchNotifications = (myBatchIds: string[]) => {
-        notifBatchUnsubscribers.forEach(u => u());
-        notifBatchUnsubscribers = [];
-        if (myBatchIds.length === 0) return;
-
-        const chunks: string[][] = [];
-        for (let i = 0; i < myBatchIds.length; i += 10) chunks.push(myBatchIds.slice(i, i + 10));
-
-        chunks.forEach((chunk, idx) => {
-          const qBatchNotif = query(batchNotifColRef, where('targetId', 'in', chunk), where('target', '==', 'Batch'));
-          const unsub = onSnapshot(qBatchNotif,
-            snap => updateNotifications(`batch-${idx}`, snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-            err => console.error('[FirestoreDBService] Error syncing notifications (batch):', err)
-          );
-          notifBatchUnsubscribers.push(unsub);
-        });
-      };
-
-      // Watch the batches subscription to reactively update batch notifications
-      const batchesWatchQuery = query(collection(db, 'batches'), where('studentIds', 'array-contains', user.uid));
-      const unsubBatchWatch = onSnapshot(batchesWatchQuery, (snap) => {
-        const batchIds = snap.docs.map(d => d.id);
-        updateBatchNotifications(batchIds);
-      }, err => console.error('[FirestoreDBService] Error watching batches for notifications:', err));
-      this.unsubscribers.push(unsubBatchWatch);
-      this.unsubscribers.push(() => notifBatchUnsubscribers.forEach(u => u()));
 
       // reviewCampaigns: only where student is a recipient
       const rcColRef = collection(db, 'reviewCampaigns');

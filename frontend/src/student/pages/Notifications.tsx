@@ -18,6 +18,8 @@ export default function Notifications() {
     if (n.target === 'Batch' && n.targetId === activeBatch?.id) return isTargetedToStudent(n, studentProfile);
     if (n.target === 'Course' && activeBatch?.course === n.targetId) return true;
     if ((n.target === 'Specific Student' || n.target === 'Student') && n.targetId === studentProfile?.id) return true;
+    // Catch-all for direct targeting via recipientIds
+    if (n.recipientIds?.includes(studentProfile?.id) || n.recipientIds?.includes(studentProfile?.uid)) return true;
     // Campaign review request notifications
     if (n.target === 'Campaign') return isTargetedToStudent(n, studentProfile);
     return false;
@@ -26,7 +28,6 @@ export default function Notifications() {
   React.useEffect(() => {
     markNotificationsRead(notifications, studentProfile);
   }, [notifications, studentProfile]);
-
   return (
     <div className="p-4 sm:p-8 space-y-6 max-w-4xl">
       <div>

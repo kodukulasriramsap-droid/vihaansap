@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db as firestoreDb } from '../config/firebase';
 import { isAdminEmail } from '../config/adminConfig';
@@ -82,17 +82,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Track whether Firestore collection listeners have been started.
-    // FirestoreDBService manages its own unsubscribers internally.
-    let firestoreStarted = false;
-
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
       setCurrentUser(user);
 
       if (user) {
         const isMentorPortal = typeof window !== 'undefined' && window.location.pathname.startsWith('/mentor');
-
 
         let role: 'admin' | 'mentor' | 'student' = 'student';
 
@@ -125,10 +120,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUserRole(role);
 
-        if (!firestoreStarted) {
-          firestoreStarted = true;
-          FirestoreDBService.subscribeToAll(role);
-        }
+        // Always (re-)initialize Firestore listeners on every auth state change.
+        // subscribeToAll() internally calls unsubscribeAll() first, so it is safe
+        // to call on token-refresh events — it will tear down stale listeners and
+        // create fresh ones with the correct role, preventing content from
+        // disappearing after Firebase's automatic hourly token rotation.
+        FirestoreDBService.subscribeToAll(role);
 
         if (isMentorPortal) {
           if (unsubStudentSnapshot.current) {
