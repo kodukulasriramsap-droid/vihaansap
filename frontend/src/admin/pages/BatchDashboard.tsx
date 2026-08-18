@@ -29,7 +29,8 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
   const sessions = (db.batchSessions?.filter(s => s.batchId === batchId) || [])
     .sort((a, b) => new Date(b.sessionDateTime || b.createdAt || 0).getTime() - new Date(a.sessionDateTime || a.createdAt || 0).getTime());
   const [editing, setEditing] = useState<any | null>(null);
-  const [recipientType, setRecipientType] = useState<'all' | 'selected'>('all');
+  const [recipientType, setRecipientType] = useState<'all' | 'selected' | 'excluded'>('all');
+  const [excludedStudentIds, setExcludedStudentIds] = useState<string[]>([]);
   const [recipientIds, setRecipientIds] = useState<string[]>([]);
 
   const toggleStudent = (uid: string) => {
@@ -39,7 +40,8 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (editing) {
-      const payload = { ...editing, batchId, recipientType, recipientIds: recipientType === 'all' ? [] : recipientIds, createdAt: editing.createdAt || new Date().toISOString() };
+      const payload = { ...editing, batchId, recipientType, recipientIds: recipientType === 'selected' ? recipientIds : [],
+      excludedStudentIds: recipientType === 'excluded' ? excludedStudentIds : [], createdAt: editing.createdAt || new Date().toISOString() };
       if (editing.id) {
         MockDB.updateItem('batchSessions', editing.id, payload);
       } else {
@@ -65,7 +67,8 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-bold text-slate-800">Today's Session</h3>
         <button 
-          onClick={() => { setEditing({ title: '', platform: 'Google Meet', meetingLink: '', sessionDateTime: '' }); setRecipientType('all'); setRecipientIds([]); }}
+          onClick={() => { setEditing({ title: '', platform: 'Google Meet', meetingLink: '', sessionDateTime: '' }); setRecipientType('all'); setRecipientIds([]);
+    setExcludedStudentIds([]); }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2"
         >
           <Plus className="w-4 h-4" /> Create Session
@@ -96,8 +99,9 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Visibility</label>
               <label className="mr-5 text-sm"><input type="radio" checked={recipientType === 'all'} onChange={() => setRecipientType('all')} /> All Students in Batch</label>
-              <label className="text-sm"><input type="radio" checked={recipientType === 'selected'} onChange={() => setRecipientType('selected')} /> Selected Students</label>
-              {recipientType === 'selected' && (
+              <label className="text-sm"><input type="radio" checked={recipientType === 'excluded'} onChange={() => setRecipientType('excluded')} /> Exclude Students</label>
+              {editing?.recipientType === 'selected' && <label className="text-sm text-amber-600"><input type="radio" checked={recipientType === 'selected'} onChange={() => setRecipientType('selected')} /> Selected Students (Legacy)</label>}
+              {(recipientType === 'selected' || recipientType === 'excluded') && (
                 <div className="mt-3 max-h-40 overflow-auto rounded-lg border bg-white p-3 space-y-2">
                   {students.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
                   {students.length > 0 && (
@@ -108,6 +112,7 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
                         onChange={(e) => {
                           if (e.target.checked) setRecipientIds(students.map(s => s.uid || s.id));
                           else setRecipientIds([]);
+    setExcludedStudentIds([]);
                         }}
                       />
                       Select All Students
@@ -117,7 +122,10 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
                     const uid = s.uid || s.id;
                     return (
                       <label key={s.id} className="block text-sm">
-                        <input type="checkbox" checked={recipientIds.includes(uid)} onChange={() => toggleStudent(uid)} /> {s.name || s.email}
+                        <input type="checkbox" checked={recipientType === 'excluded' ? excludedStudentIds.includes(uid) : recipientIds.includes(uid)} onChange={() => {
+                        if (recipientType === 'excluded') setExcludedStudentIds(ids => ids.includes(uid) ? ids.filter(id => id !== uid) : [...ids, uid]);
+                        else setRecipientIds(ids => ids.includes(uid) ? ids.filter(id => id !== uid) : [...ids, uid]);
+                      }} /> {s.name || s.email}
                       </label>
                     );
                   })}
@@ -130,7 +138,7 @@ function TodaySessionTab({ batchId, sync }: { batchId: string; sync: any }) {
             <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">Publish Session</button>
           </div>
         </form>
-      ) : <div className="divide-y rounded-xl border bg-white">{sessions.map(s => <div key={s.id} className="p-4 flex justify-between"><div><p className="font-bold">{s.title || s.topic}</p><p className="text-sm text-slate-500">{s.platform || 'Meeting'} · {s.sessionDateTime ? new Date(s.sessionDateTime).toLocaleString() : `${s.date || ''} ${s.time || ''}`}</p></div><button onClick={() => { setEditing(s); setRecipientType(s.recipientType || s.recipientMode || 'all'); setRecipientIds(s.recipientIds || []); }} className="text-indigo-600 font-semibold text-sm">Edit</button></div>)}{sessions.length === 0 && <div className="p-10 text-center text-slate-500">No sessions published.</div>}</div>}
+      ) : <div className="divide-y rounded-xl border bg-white">{sessions.map(s => <div key={s.id} className="p-4 flex justify-between"><div><p className="font-bold">{s.title || s.topic}</p><p className="text-sm text-slate-500">{s.platform || 'Meeting'} · {s.sessionDateTime ? new Date(s.sessionDateTime).toLocaleString() : `${s.date || ''} ${s.time || ''}`}</p></div><button onClick={() => { setEditing(s); setRecipientType(s.recipientType || s.recipientMode || 'all'); setRecipientIds(s.recipientIds || []); setExcludedStudentIds(s.excludedStudentIds || []); }} className="text-indigo-600 font-semibold text-sm">Edit</button></div>)}{sessions.length === 0 && <div className="p-10 text-center text-slate-500">No sessions published.</div>}</div>}
 
       {/* Sync Batch History Modal */}
       {showSyncModal && (
@@ -954,7 +962,8 @@ function LiveClassesTab({ batchId }: { batchId: string }) {
     .sort((a, b) => new Date(b.scheduledAt || b.createdAt || 0).getTime() - new Date(a.scheduledAt || a.createdAt || 0).getTime());
 
   const [editing, setEditing] = useState<any | null>(null);
-  const [recipientMode, setRecipientMode] = useState<'all' | 'selected'>('all');
+  const [recipientMode, setRecipientMode] = useState<'all' | 'selected' | 'excluded'>('all');
+  const [excludedStudentIds, setExcludedStudentIds] = useState<string[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [saveError, setSaveError] = useState('');
 
@@ -962,6 +971,7 @@ function LiveClassesTab({ batchId }: { batchId: string }) {
     setEditing({ title: '', meetingLink: '', platform: 'Zoom', scheduledAt: '' });
     setRecipientMode('all');
     setSelectedStudentIds([]);
+    setExcludedStudentIds([]);
   };
 
   const toggleStudent = (id: string) => {
@@ -976,7 +986,8 @@ function LiveClassesTab({ batchId }: { batchId: string }) {
       batchId,
       recipientType: recipientMode,
       recipientMode,
-      recipientIds: recipientMode === 'all' ? [] : selectedStudentIds,
+      recipientIds: recipientMode === 'selected' ? selectedStudentIds : [],
+      excludedStudentIds: recipientMode === 'excluded' ? excludedStudentIds : [],
       createdAt: new Date().toISOString(),
     };
     if (editing.id) {
@@ -1029,11 +1040,17 @@ function LiveClassesTab({ batchId }: { batchId: string }) {
                   <span className="text-sm font-semibold text-slate-700">All Students in Batch</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={recipientMode === 'selected'} onChange={() => setRecipientMode('selected')} />
-                  <span className="text-sm font-semibold text-slate-700">Selected Students</span>
+                  <input type="radio" checked={recipientMode === 'excluded'} onChange={() => setRecipientMode('excluded')} />
+                  <span className="text-sm font-semibold text-slate-700">Exclude Students</span>
                 </label>
+                {editing?.recipientMode === 'selected' && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" checked={recipientMode === 'selected'} onChange={() => setRecipientMode('selected')} />
+                    <span className="text-sm font-semibold text-amber-600">Selected Students (Legacy)</span>
+                  </label>
+                )}
               </div>
-              {recipientMode === 'selected' && (
+              {(recipientMode === 'selected' || recipientMode === 'excluded') && (
                 <div className="mt-3 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
                   {enrolledStudents.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
                   {enrolledStudents.length > 0 && (
@@ -1046,6 +1063,7 @@ function LiveClassesTab({ batchId }: { batchId: string }) {
                             setSelectedStudentIds(enrolledStudents.map(s => s.uid || s.id));
                           } else {
                             setSelectedStudentIds([]);
+    setExcludedStudentIds([]);
                           }
                         }} 
                       />
@@ -1056,7 +1074,10 @@ function LiveClassesTab({ batchId }: { batchId: string }) {
                     const uid = s.uid || s.id;
                     return (
                     <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                      <input type="checkbox" checked={selectedStudentIds.includes(uid)} onChange={() => toggleStudent(uid)} />
+                      <input type="checkbox" checked={recipientMode === 'excluded' ? excludedStudentIds.includes(uid) : selectedStudentIds.includes(uid)} onChange={() => {
+                        if (recipientMode === 'excluded') setExcludedStudentIds(prev => prev.includes(uid) ? prev.filter(x => x !== uid) : [...prev, uid]);
+                        else setSelectedStudentIds(prev => prev.includes(uid) ? prev.filter(x => x !== uid) : [...prev, uid]);
+                      }} />
                       {s.name} <span className="text-slate-400 text-xs">({s.email})</span>
                     </label>
                   );})}
@@ -1081,7 +1102,7 @@ function LiveClassesTab({ batchId }: { batchId: string }) {
               </div>
               <h4 className="font-bold text-slate-800">{lc.title}</h4>
               <p className="text-xs text-slate-500 mt-0.5">
-                Recipients: {lc.recipientMode === 'selected' ? `${(lc.recipientIds || []).length} selected students` : 'All students'}
+                Recipients: {lc.recipientMode === 'selected' ? `${(lc.recipientIds || []).length} selected students` : lc.recipientMode === 'excluded' ? `${(lc.excludedStudentIds || []).length} excluded students` : 'All students'}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -1108,7 +1129,8 @@ function StudyMaterialsTab({ batchId }: { batchId: string }) {
   const materials = (db.studyMaterials?.filter(m => m.batchId === batchId) || [])
     .sort((a, b) => new Date(b.uploadDate || b.createdAt || 0).getTime() - new Date(a.uploadDate || a.createdAt || 0).getTime());
   const [editing, setEditing] = useState<Partial<any> | null>(null);
-  const [recipientMode, setRecipientMode] = useState<'all' | 'selected'>('all');
+  const [recipientMode, setRecipientMode] = useState<'all' | 'selected' | 'excluded'>('all');
+  const [excludedStudentIds, setExcludedStudentIds] = useState<string[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
   const toggleStudent = (id: string) => {
@@ -1122,7 +1144,8 @@ function StudyMaterialsTab({ batchId }: { batchId: string }) {
         ...editing,
         recipientType: recipientMode,
         recipientMode,
-        recipientIds: recipientMode === 'all' ? [] : selectedStudentIds,
+        recipientIds: recipientMode === 'selected' ? selectedStudentIds : [],
+      excludedStudentIds: recipientMode === 'excluded' ? excludedStudentIds : [],
         createdAt: editing.createdAt || new Date().toISOString(),
       };
       if (editing.id) {
@@ -1166,6 +1189,7 @@ function StudyMaterialsTab({ batchId }: { batchId: string }) {
     setEditing({ title: '', platform: 'Google Drive', url: '', visibility: 'Students' });
     setRecipientMode('all');
     setSelectedStudentIds([]);
+    setExcludedStudentIds([]);
   };
 
   return (
@@ -1203,11 +1227,17 @@ function StudyMaterialsTab({ batchId }: { batchId: string }) {
                   <span className="text-sm font-semibold text-slate-700">All Students in Batch</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={recipientMode === 'selected'} onChange={() => setRecipientMode('selected')} />
-                  <span className="text-sm font-semibold text-slate-700">Selected Students</span>
+                  <input type="radio" checked={recipientMode === 'excluded'} onChange={() => setRecipientMode('excluded')} />
+                  <span className="text-sm font-semibold text-slate-700">Exclude Students</span>
                 </label>
+                {editing?.recipientMode === 'selected' && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" checked={recipientMode === 'selected'} onChange={() => setRecipientMode('selected')} />
+                    <span className="text-sm font-semibold text-amber-600">Selected Students (Legacy)</span>
+                  </label>
+                )}
               </div>
-              {recipientMode === 'selected' && (
+              {(recipientMode === 'selected' || recipientMode === 'excluded') && (
                 <div className="mt-3 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
                   {enrolledStudents.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
                   {enrolledStudents.length > 0 && (
@@ -1220,6 +1250,7 @@ function StudyMaterialsTab({ batchId }: { batchId: string }) {
                             setSelectedStudentIds(enrolledStudents.map(s => s.uid || s.id));
                           } else {
                             setSelectedStudentIds([]);
+    setExcludedStudentIds([]);
                           }
                         }} 
                       />
@@ -1230,7 +1261,10 @@ function StudyMaterialsTab({ batchId }: { batchId: string }) {
                     const uid = s.uid || s.id;
                     return (
                     <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                      <input type="checkbox" checked={selectedStudentIds.includes(uid)} onChange={() => toggleStudent(uid)} />
+                      <input type="checkbox" checked={recipientMode === 'excluded' ? excludedStudentIds.includes(uid) : selectedStudentIds.includes(uid)} onChange={() => {
+                        if (recipientMode === 'excluded') setExcludedStudentIds(prev => prev.includes(uid) ? prev.filter(x => x !== uid) : [...prev, uid]);
+                        else setSelectedStudentIds(prev => prev.includes(uid) ? prev.filter(x => x !== uid) : [...prev, uid]);
+                      }} />
                       {s.name} <span className="text-slate-400 text-xs">({s.email})</span>
                     </label>
                   );})}
@@ -1276,11 +1310,11 @@ function StudyMaterialsTab({ batchId }: { batchId: string }) {
                   <p className="text-xs text-slate-500">Published {formatSafeDate(mat.uploadDate || mat.createdAt)}</p>
                 </td>
                 <td className="px-4 py-4 text-xs text-slate-500">
-                  {mat.recipientMode === 'selected' ? `${(mat.recipientIds || []).length} students` : 'All'}
+                  {mat.recipientMode === 'selected' ? `${(mat.recipientIds || []).length} selected` : mat.recipientMode === 'excluded' ? `${(mat.excludedStudentIds || []).length} excluded` : 'All'}
                 </td>
                 <td className="px-4 py-4 text-right">
                   <div className="flex justify-end items-center gap-2">
-                    <button onClick={() => { setEditing(mat); setRecipientMode(mat.recipientMode || 'all'); setSelectedStudentIds(mat.recipientIds || []); }} className="text-indigo-600 hover:text-indigo-800 p-2 font-semibold text-sm">Edit</button>
+                    <button onClick={() => { setEditing(mat); setRecipientMode(mat.recipientMode || 'all'); setSelectedStudentIds(mat.recipientIds || []); setExcludedStudentIds(mat.excludedStudentIds || []); }} className="text-indigo-600 hover:text-indigo-800 p-2 font-semibold text-sm">Edit</button>
                     <button onClick={() => MockDB.deleteItem('studyMaterials', mat.id)} className="text-slate-400 hover:text-red-600 p-2"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </td>
@@ -1456,7 +1490,8 @@ function RecordingsTab({ batchId }: { batchId: string }) {
   const recordings = (db.recordings?.filter(r => r.batchId === batchId) || [])
     .sort((a, b) => new Date(b.date || b.uploadDate || 0).getTime() - new Date(a.date || a.uploadDate || 0).getTime());
   const [editing, setEditing] = useState<any | null>(null);
-  const [recipientMode, setRecipientMode] = useState<'all' | 'selected'>('all');
+  const [recipientMode, setRecipientMode] = useState<'all' | 'selected' | 'excluded'>('all');
+  const [excludedStudentIds, setExcludedStudentIds] = useState<string[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [saveError, setSaveError] = useState('');
 
@@ -1473,7 +1508,8 @@ function RecordingsTab({ batchId }: { batchId: string }) {
         batchId,
         recipientType: recipientMode,
         recipientMode,
-        recipientIds: recipientMode === 'all' ? [] : selectedStudentIds,
+        recipientIds: recipientMode === 'selected' ? selectedStudentIds : [],
+      excludedStudentIds: recipientMode === 'excluded' ? excludedStudentIds : [],
       };
       if (editing.id) {
         try {
@@ -1520,6 +1556,7 @@ function RecordingsTab({ batchId }: { batchId: string }) {
     setEditing({ title: '', source: 'Google Drive', videoUrl: '', visibility: 'Students', date: new Date().toISOString().split('T')[0] });
     setRecipientMode('all');
     setSelectedStudentIds([]);
+    setExcludedStudentIds([]);
   };
 
   return (
@@ -1582,11 +1619,17 @@ function RecordingsTab({ batchId }: { batchId: string }) {
                   <span className="text-sm font-semibold text-slate-700">All Students</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={recipientMode === 'selected'} onChange={() => setRecipientMode('selected')} />
-                  <span className="text-sm font-semibold text-slate-700">Selected Students</span>
+                  <input type="radio" checked={recipientMode === 'excluded'} onChange={() => setRecipientMode('excluded')} />
+                  <span className="text-sm font-semibold text-slate-700">Exclude Students</span>
                 </label>
+                {editing?.recipientMode === 'selected' && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" checked={recipientMode === 'selected'} onChange={() => setRecipientMode('selected')} />
+                    <span className="text-sm font-semibold text-amber-600">Selected Students (Legacy)</span>
+                  </label>
+                )}
               </div>
-              {recipientMode === 'selected' && (
+              {(recipientMode === 'selected' || recipientMode === 'excluded') && (
                 <div className="mt-3 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
                   {enrolledStudents.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
                   {enrolledStudents.length > 0 && (
@@ -1599,6 +1642,7 @@ function RecordingsTab({ batchId }: { batchId: string }) {
                             setSelectedStudentIds(enrolledStudents.map(s => s.uid || s.id));
                           } else {
                             setSelectedStudentIds([]);
+    setExcludedStudentIds([]);
                           }
                         }} 
                       />
@@ -1609,7 +1653,10 @@ function RecordingsTab({ batchId }: { batchId: string }) {
                     const uid = s.uid || s.id;
                     return (
                     <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                      <input type="checkbox" checked={selectedStudentIds.includes(uid)} onChange={() => toggleStudent(uid)} />
+                      <input type="checkbox" checked={recipientMode === 'excluded' ? excludedStudentIds.includes(uid) : selectedStudentIds.includes(uid)} onChange={() => {
+                        if (recipientMode === 'excluded') setExcludedStudentIds(prev => prev.includes(uid) ? prev.filter(x => x !== uid) : [...prev, uid]);
+                        else setSelectedStudentIds(prev => prev.includes(uid) ? prev.filter(x => x !== uid) : [...prev, uid]);
+                      }} />
                       {s.name} <span className="text-slate-400 text-xs">({s.email})</span>
                     </label>
                   );})}
@@ -1640,13 +1687,14 @@ function RecordingsTab({ batchId }: { batchId: string }) {
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-slate-800 text-sm md:text-base leading-tight">{rec.title}</h3>
                     {rec.visibility === 'Hidden' && <span className="text-[10px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded-md">Hidden</span>}
-                    {rec.recipientMode === 'selected' && <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-md">Selected</span>}
+                    {rec.recipientMode === 'selected' && <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-md">Legacy Selected</span>}
+                    {rec.recipientMode === 'excluded' && <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-md">Excluded</span>}
                   </div>
                   {rec.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{rec.description}</p>}
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-slate-500">{rec.date || '—'}</span>
                     <span className="text-xs text-slate-500">• {rec.source || 'Video'}</span>
-                    <span className="text-xs text-slate-500">• {rec.recipientMode === 'selected' ? `${(rec.recipientIds || []).length} students` : 'All'}</span>
+                    <span className="text-xs text-slate-500">• {rec.recipientMode === 'selected' ? `${(rec.recipientIds || []).length} selected` : rec.recipientMode === 'excluded' ? `${(rec.excludedStudentIds || []).length} excluded` : 'All'}</span>
                   </div>
                 </div>
                 <div className="ml-4 flex-shrink-0 flex items-center gap-2">
@@ -1658,7 +1706,7 @@ function RecordingsTab({ batchId }: { batchId: string }) {
                   >
                     <PlayCircle className="w-4 h-4" /> Watch
                   </a>
-                  <button onClick={() => { setEditing(rec); setRecipientMode(rec.recipientMode || 'all'); setSelectedStudentIds(rec.recipientIds || []); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                  <button onClick={() => { setEditing(rec); setRecipientMode(rec.recipientMode || 'all'); setSelectedStudentIds(rec.recipientIds || []); setExcludedStudentIds(rec.excludedStudentIds || []); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button onClick={() => MockDB.deleteItem('recordings', rec.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
@@ -1684,7 +1732,8 @@ function NotificationsTab({ batchId }: { batchId: string }) {
   const notifications = (db.notifications?.filter(n => n.target === 'Batch' && n.targetId === batchId) || [])
     .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
   const [editing, setEditing] = useState<any | null>(null);
-  const [recipientMode, setRecipientMode] = useState<'all' | 'selected'>('all');
+  const [recipientMode, setRecipientMode] = useState<'all' | 'selected' | 'excluded'>('all');
+  const [excludedStudentIds, setExcludedStudentIds] = useState<string[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
   const toggleStudent = (id: string) => {
@@ -1701,7 +1750,8 @@ function NotificationsTab({ batchId }: { batchId: string }) {
         date: new Date().toISOString(),
         recipientType: recipientMode,
         recipientMode,
-        recipientIds: recipientMode === 'all' ? [] : selectedStudentIds,
+        recipientIds: recipientMode === 'selected' ? selectedStudentIds : [],
+      excludedStudentIds: recipientMode === 'excluded' ? excludedStudentIds : [],
       };
       if (editing.id) {
         MockDB.updateItem('notifications', editing.id, notif);
@@ -1717,7 +1767,8 @@ function NotificationsTab({ batchId }: { batchId: string }) {
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-bold text-slate-800">Batch Notifications</h3>
         <button 
-          onClick={() => { setEditing({ title: '', message: '', type: 'info' }); setRecipientMode('all'); setSelectedStudentIds([]); }}
+          onClick={() => { setEditing({ title: '', message: '', type: 'info' }); setRecipientMode('all'); setSelectedStudentIds([]);
+    setExcludedStudentIds([]); }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2"
         >
           <Plus className="w-4 h-4" /> Send Notification
@@ -1751,11 +1802,17 @@ function NotificationsTab({ batchId }: { batchId: string }) {
                   <span className="text-sm font-semibold text-slate-700">All Students</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" checked={recipientMode === 'selected'} onChange={() => setRecipientMode('selected')} />
-                  <span className="text-sm font-semibold text-slate-700">Selected Students</span>
+                  <input type="radio" checked={recipientMode === 'excluded'} onChange={() => setRecipientMode('excluded')} />
+                  <span className="text-sm font-semibold text-slate-700">Exclude Students</span>
                 </label>
+                {editing?.recipientMode === 'selected' && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" checked={recipientMode === 'selected'} onChange={() => setRecipientMode('selected')} />
+                    <span className="text-sm font-semibold text-amber-600">Selected Students (Legacy)</span>
+                  </label>
+                )}
               </div>
-              {recipientMode === 'selected' && (
+              {(recipientMode === 'selected' || recipientMode === 'excluded') && (
                 <div className="mt-3 border border-slate-200 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
                   {enrolledStudents.length === 0 && <p className="text-sm text-slate-400">No students enrolled.</p>}
                   {enrolledStudents.length > 0 && (
@@ -1768,6 +1825,7 @@ function NotificationsTab({ batchId }: { batchId: string }) {
                             setSelectedStudentIds(enrolledStudents.map(s => s.uid || s.id));
                           } else {
                             setSelectedStudentIds([]);
+    setExcludedStudentIds([]);
                           }
                         }} 
                       />
@@ -1778,7 +1836,10 @@ function NotificationsTab({ batchId }: { batchId: string }) {
                     const uid = s.uid || s.id;
                     return (
                     <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                      <input type="checkbox" checked={selectedStudentIds.includes(uid)} onChange={() => toggleStudent(uid)} />
+                      <input type="checkbox" checked={recipientMode === 'excluded' ? excludedStudentIds.includes(uid) : selectedStudentIds.includes(uid)} onChange={() => {
+                        if (recipientMode === 'excluded') setExcludedStudentIds(prev => prev.includes(uid) ? prev.filter(x => x !== uid) : [...prev, uid]);
+                        else setSelectedStudentIds(prev => prev.includes(uid) ? prev.filter(x => x !== uid) : [...prev, uid]);
+                      }} />
                       {s.name} <span className="text-slate-400 text-xs">({s.email})</span>
                     </label>
                   );})}

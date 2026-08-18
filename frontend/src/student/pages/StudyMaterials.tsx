@@ -5,6 +5,7 @@ import { FileText, Download, ExternalLink, Calendar } from 'lucide-react';
 import { downloadFile } from '../../utils/downloadFile';
 import { useActiveBatch } from '../contexts/ActiveBatchContext';
 import { markContentRead } from '../../utils/contentReadState';
+import { isTargetedToStudent } from '../../utils/recipientTargeting';
 
 export default function StudyMaterials() {
   const { studentProfile } = useAuth();
@@ -15,28 +16,7 @@ export default function StudyMaterials() {
     const inBatch = m.batchId === activeBatch?.id;
     const notHidden = m.visibility !== 'Hidden';
 
-    // Explicitly Targeted
-    const isTargeted = (m.recipientType === 'selected' || m.recipientMode === 'selected') 
-      ? (m.recipientIds || []).includes(studentProfile?.uid)
-      : false;
-
-    // Batch-wide (all)
-    const isBatchWide = m.recipientType === 'all' || m.recipientMode === 'all' || m.visibility === 'Students' || m.visibility === 'Everyone' || (!m.recipientType && !m.recipientMode);
-
-    // Historical Eligibility for Batch-wide
-    const joinDate = studentProfile?.batchJoinDates?.[m.batchId] || '';
-    const hasGrant = studentProfile?.grantedHistoricalBatches?.includes(m.batchId);
-    const contentDate = m.uploadDate || m.createdAt || m.date || '';
-    
-    // Compare dates safely by comparing the YYYY-MM-DD prefix to prevent same-day time-suffix bugs
-    const safeContentDate = contentDate.substring(0, 10);
-    const safeJoinDate = joinDate.substring(0, 10);
-    const isHistoricallyEligible = safeJoinDate === '' || hasGrant || (safeContentDate && safeContentDate >= safeJoinDate);
-
-    // Final decision
-    const isVisible = isTargeted || (isBatchWide && isHistoricallyEligible);
-
-    return inBatch && notHidden && isVisible;
+    return inBatch && notHidden && isTargetedToStudent(m, studentProfile);
   }).sort((a, b) => new Date(b.uploadDate || 0).getTime() - new Date(a.uploadDate || 0).getTime()) || [];
 
   useEffect(() => {
