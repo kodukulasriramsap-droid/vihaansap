@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDB } from '../../hooks/useDB';
 import { PlayCircle, Calendar } from 'lucide-react';
-import { isTargetedToStudent } from '../../utils/recipientTargeting';
 import { useActiveBatch } from '../contexts/ActiveBatchContext';
 import { markContentRead } from '../../utils/contentReadState';
 
@@ -13,7 +12,19 @@ export default function RecordedClasses() {
   const { activeBatch } = useActiveBatch();
   
   // 1. Recordings from completed sessions
-  const mySessions = db.batchSessions?.filter(s => s.batchId === activeBatch?.id && isTargetedToStudent(s, studentProfile)) || [];
+  const mySessions = db.batchSessions?.filter(s => {
+    if (s.batchId !== activeBatch?.id) return false;
+    const isTargeted = (s.recipientType === 'selected' || s.recipientMode === 'selected')
+      ? (s.recipientIds || []).includes(studentProfile?.uid)
+      : false;
+    const isBatchWide = s.recipientType === 'all' || s.recipientMode === 'all' || (!s.recipientType && !s.recipientMode);
+    const joinDate = studentProfile?.batchJoinDates?.[s.batchId] || '';
+    const hasGrant = studentProfile?.grantedHistoricalBatches?.includes(s.batchId);
+    const contentDate = (s.uploadDate || s.createdAt || s.date || '').substring(0, 10);
+    const safeJoinDate = joinDate.substring(0, 10);
+    const isHistoricallyEligible = safeJoinDate === '' || hasGrant || (contentDate && contentDate >= safeJoinDate);
+    return isTargeted || (isBatchWide && isHistoricallyEligible);
+  }) || [];
   const sessionRecordings = mySessions.filter(s => s.status === 'Completed' && s.recordingUrl).map(s => ({
     id: s.id,
     topic: s.topic,
@@ -23,13 +34,32 @@ export default function RecordedClasses() {
   }));
 
   // 2. Standalone uploaded recordings
-  console.log('[DEBUG RecordedClasses] Initial db.recordings:', db.recordings?.map(r => r.id));
   const standaloneRecordings = db.recordings?.filter(r => {
-    const isTargeted = isTargetedToStudent(r, studentProfile);
     const inBatch = r.batchId === activeBatch?.id;
     const notHidden = r.visibility !== 'Hidden';
-    console.log(`[DEBUG RecordedClasses] Filtering ${r.id}: inBatch=${inBatch}, notHidden=${notHidden}, isTargeted=${isTargeted}`);
-    return inBatch && notHidden && isTargeted;
+    
+    // Explicitly Targeted
+    const isTargeted = (r.recipientType === 'selected' || r.recipientMode === 'selected') 
+      ? (r.recipientIds || []).includes(studentProfile?.uid)
+      : false;
+
+    // Batch-wide (all)
+    const isBatchWide = r.recipientType === 'all' || r.recipientMode === 'all' || r.visibility === 'Students' || r.visibility === 'Everyone' || (!r.recipientType && !r.recipientMode);
+
+    // Historical Eligibility for Batch-wide
+    const joinDate = studentProfile?.batchJoinDates?.[r.batchId] || '';
+    const hasGrant = studentProfile?.grantedHistoricalBatches?.includes(r.batchId);
+    const contentDate = r.uploadDate || r.createdAt || r.date || '';
+    
+    // Compare dates safely by comparing the YYYY-MM-DD prefix to prevent same-day time-suffix bugs
+    const safeContentDate = contentDate.substring(0, 10);
+    const safeJoinDate = joinDate.substring(0, 10);
+    const isHistoricallyEligible = safeJoinDate === '' || hasGrant || (safeContentDate && safeContentDate >= safeJoinDate);
+
+    // Final decision
+    const isVisible = isTargeted || (isBatchWide && isHistoricallyEligible);
+
+    return inBatch && notHidden && isVisible;
   }).map(r => ({
     id: r.id,
     topic: r.title,

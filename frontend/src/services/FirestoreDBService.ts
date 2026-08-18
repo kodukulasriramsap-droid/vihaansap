@@ -114,17 +114,12 @@ export class FirestoreDBService {
               } else {
                 // Student logic: requires merging of visibility rules
                 const mergerState = new Map<string, any>();
-                const mergeDocs = (docs: any[], queryName: string) => {
-                  console.log(`[DEBUG ${colName}] ${queryName} returned ${docs.length} docs for chunks:`, chunk);
-                  if (docs.length > 0) {
-                    console.log(`[DEBUG ${colName}] ${queryName} doc IDs:`, docs.map(d => d.id));
-                  }
+                const mergeDocs = (docs: any[], _queryName: string) => {
                   docs.forEach(d => mergerState.set(d.id, d));
                   const currentDb = MockDB.get();
                   const finalDocs = Array.from(mergerState.values());
                   (currentDb[colName as 'studyMaterials' | 'recordings'] as any[]) = finalDocs;
                   MockDB.set(currentDb);
-                  console.log(`[DEBUG ${colName}] MockDB now has ${finalDocs.length} total docs for this chunk.`);
                 };
 
                 const q1 = query(colRef, where('batchId', 'in', chunk), where('recipientMode', '==', 'all'));

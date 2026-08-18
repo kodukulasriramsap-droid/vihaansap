@@ -4,7 +4,6 @@ import { useDB } from '../../hooks/useDB';
 import { FileText, Download, ExternalLink, Calendar } from 'lucide-react';
 import { downloadFile } from '../../utils/downloadFile';
 import { useActiveBatch } from '../contexts/ActiveBatchContext';
-import { isTargetedToStudent } from '../../utils/recipientTargeting';
 import { markContentRead } from '../../utils/contentReadState';
 
 export default function StudyMaterials() {
@@ -12,12 +11,32 @@ export default function StudyMaterials() {
   const db = useDB();
 
   const { activeBatch } = useActiveBatch();
-  console.log('[DEBUG StudyMaterials] Initial db.studyMaterials:', db.studyMaterials?.map(m => m.id));
   const studyMaterials = db.studyMaterials?.filter(m => {
-    const isTargeted = isTargetedToStudent(m, studentProfile);
     const inBatch = m.batchId === activeBatch?.id;
-    console.log(`[DEBUG StudyMaterials] Filtering ${m.id}: inBatch=${inBatch}, isTargeted=${isTargeted}`);
-    return inBatch && isTargeted && m.visibility !== 'Hidden';
+    const notHidden = m.visibility !== 'Hidden';
+
+    // Explicitly Targeted
+    const isTargeted = (m.recipientType === 'selected' || m.recipientMode === 'selected') 
+      ? (m.recipientIds || []).includes(studentProfile?.uid)
+      : false;
+
+    // Batch-wide (all)
+    const isBatchWide = m.recipientType === 'all' || m.recipientMode === 'all' || m.visibility === 'Students' || m.visibility === 'Everyone' || (!m.recipientType && !m.recipientMode);
+
+    // Historical Eligibility for Batch-wide
+    const joinDate = studentProfile?.batchJoinDates?.[m.batchId] || '';
+    const hasGrant = studentProfile?.grantedHistoricalBatches?.includes(m.batchId);
+    const contentDate = m.uploadDate || m.createdAt || m.date || '';
+    
+    // Compare dates safely by comparing the YYYY-MM-DD prefix to prevent same-day time-suffix bugs
+    const safeContentDate = contentDate.substring(0, 10);
+    const safeJoinDate = joinDate.substring(0, 10);
+    const isHistoricallyEligible = safeJoinDate === '' || hasGrant || (safeContentDate && safeContentDate >= safeJoinDate);
+
+    // Final decision
+    const isVisible = isTargeted || (isBatchWide && isHistoricallyEligible);
+
+    return inBatch && notHidden && isVisible;
   }).sort((a, b) => new Date(b.uploadDate || 0).getTime() - new Date(a.uploadDate || 0).getTime()) || [];
 
   useEffect(() => {
