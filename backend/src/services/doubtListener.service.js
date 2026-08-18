@@ -1,51 +1,79 @@
 const { db } = require('../config/firebase');
 const { sendNewDoubtAlert } = require('./whatsapp.service');
 
+// Guard to prevent multiple listeners from being registered
+let listenerInitialized = false;
+
 function initDoubtsListener() {
   if (!db) {
     console.warn('[DoubtListener] Firestore DB not initialized, skipping listener.');
     return;
   }
 
+  if (listenerInitialized) {
+    console.warn('[DoubtListener] Listener already initialized. Skipping duplicate registration.');
+    return;
+  }
+
+  listenerInitialized = true;
   console.log('[DoubtListener] Initializing Firestore onSnapshot listener for doubts...');
 
-  // We query all doubts that haven't had a WhatsApp alert sent yet.
-  // Using an open snapshot listener, we process 'added' events.
+  // Listen for doubts that have not been successfully processed yet.
+  // whatsappAlertSent is only set to true after a CONFIRMED successful API call.
+  // whatsappAlertFailed is set to true if the API call fails (prevents infinite retry spam).
   db.collection('doubts')
     .where('whatsappAlertSent', '!=', true)
     .onSnapshot(
       (snapshot) => {
         snapshot.docChanges().forEach(async (change) => {
-          // We only care about newly detected documents that match the query
-          if (change.type === 'added') {
-            const doubt = { id: change.doc.id, ...change.doc.data() };
-            
-            // Double-check idempotency locally just in case
-            if (doubt.whatsappAlertSent) return;
+          // Only process newly added (or newly matching) documents
+          if (change.type !== 'added') return;
 
-            console.log(`[DoubtListener] Processing new doubt: ${doubt.id} from ${doubt.studentName}`);
+          const doubt = { id: change.doc.id, ...change.doc.data() };
 
-            // Send the WhatsApp Alert
-            const success = await sendNewDoubtAlert(doubt);
+          // Hard idempotency guard: skip if already successfully sent
+          if (doubt.whatsappAlertSent === true) return;
 
-            // Regardless of success/failure, we mark it to prevent infinite retries
-            // If it failed due to network, marking it prevents spam. 
-            // If a robust retry is needed later, a different status enum could be used.
+          // Skip if previously failed — prevents infinite retry on permanent failures.
+          // A manual reset (deleting whatsappAlertFailed) can trigger a retry if needed.
+          if (doubt.whatsappAlertFailed === true) return;
+
+          console.log(`[DoubtListener] Processing new doubt: ${doubt.id} from ${doubt.studentName}`);
+
+          // Send the WhatsApp Alert
+          const success = await sendNewDoubtAlert(doubt);
+
+          if (success) {
+            // Only mark as sent on CONFIRMED API success
             try {
               await db.collection('doubts').doc(doubt.id).update({
                 whatsappAlertSent: true,
                 whatsappAlertSentAt: new Date().toISOString(),
-                whatsappAlertSuccess: success
+                whatsappAlertSuccess: true,
               });
-              console.log(`[DoubtListener] Marked doubt ${doubt.id} as processed.`);
+              console.log(`[DoubtListener] Marked doubt ${doubt.id} as successfully alerted.`);
             } catch (err) {
-              console.error(`[DoubtListener] Failed to update doubt ${doubt.id} status:`, err);
+              console.error(`[DoubtListener] Failed to update doubt ${doubt.id} success status:`, err.message);
+            }
+          } else {
+            // Mark as failed so we don't retry indefinitely on permanent failures
+            // (e.g. invalid template, revoked token). A transient network failure
+            // will be retried on the next snapshot event only if whatsappAlertFailed is not set.
+            try {
+              await db.collection('doubts').doc(doubt.id).update({
+                whatsappAlertFailed: true,
+                whatsappAlertFailedAt: new Date().toISOString(),
+                whatsappAlertSuccess: false,
+              });
+              console.warn(`[DoubtListener] Marked doubt ${doubt.id} as failed. Check WhatsApp config.`);
+            } catch (err) {
+              console.error(`[DoubtListener] Failed to update doubt ${doubt.id} failure status:`, err.message);
             }
           }
         });
       },
       (error) => {
-        console.error('[DoubtListener] Error on doubts collection snapshot:', error);
+        console.error('[DoubtListener] Error on doubts collection snapshot:', error.message);
       }
     );
 }
