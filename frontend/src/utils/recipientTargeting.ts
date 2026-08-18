@@ -11,6 +11,15 @@ export type RecipientTarget = {
   date?: string;
 };
 
+export const normalizeDateStr = (val: any): string => {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val?.toDate === 'function') return val.toDate().toISOString();
+  if (val instanceof Date) return val.toISOString();
+  if (typeof val?.seconds === 'number') return new Date(val.seconds * 1000).toISOString();
+  return String(val);
+};
+
 export const studentIdentifiers = (student: any) =>
   [student?.id, student?.uid, student?.studentId].filter(Boolean) as string[];
 
@@ -34,16 +43,16 @@ export const isTargetedToStudent = (item: RecipientTarget, student: any) => {
 
   // Historical Grant Logic for 'all' mode
   const batchId = item.batchId;
-  const contentDate = item.uploadDate || item.createdAt || item.date || '';
+  const contentDate = normalizeDateStr(item.uploadDate || item.createdAt || item.date);
   
   const hasGrant = batchId && student?.grantedHistoricalBatches?.includes(batchId);
-  const joinDate = (batchId && student?.batchJoinDates && student?.batchJoinDates[batchId]) || '';
+  const joinDate = normalizeDateStr(batchId && student?.batchJoinDates && student?.batchJoinDates[batchId]);
   
   // Safe prefix comparison (YYYY-MM-DD)
   const safeJoinDate = joinDate.substring(0, 10);
   const safeContentDate = contentDate.substring(0, 10);
 
-  // If legacy (no join date recorded), or explicitly granted, or content is newer than join date
+  // If legacy (no join date recorded), or explicitly granted, or content is newer than or equal to join date
   if (safeJoinDate === '' || hasGrant || (safeContentDate && safeContentDate >= safeJoinDate)) {
       return true;
   }
