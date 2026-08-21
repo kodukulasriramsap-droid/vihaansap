@@ -50,6 +50,52 @@ export default function CourseCalendar() {
         </div>
       </div>
     )}
+
+    {/* --- CUSTOM SESSIONS SECTION --- */}
+    {activeBatch && sessions.filter(s => s.sessionSource === 'custom').length > 0 && (
+      <div className="mt-8">
+        <h3 className="text-xl font-bold text-slate-800 tracking-tight mb-4">Additional Batch Sessions</h3>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
+          {sessions.filter(s => s.sessionSource === 'custom').map((s, idx) => (
+            <div key={s.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
+              <div className="flex items-start gap-4">
+                <span className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 text-sm font-bold flex items-center justify-center shrink-0">
+                  <CalendarDays className="w-5 h-5" />
+                </span>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-100 text-purple-700">Custom Session</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                      s.status === 'Completed' ? 'bg-green-100 text-green-700' : 
+                      s.status === 'Live' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {s.status}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-slate-800 text-base">{s.topic}</h4>
+                  {s.description && <p className="text-sm text-slate-600 mt-1">{s.description}</p>}
+                </div>
+              </div>
+              <div className="sm:text-right shrink-0 ml-14 sm:ml-0">
+                {s.date ? (
+                  <>
+                    <p className="font-bold text-slate-700 text-sm">{s.date}</p>
+                    <p className="text-xs text-slate-500 font-medium">{s.time}</p>
+                  </>
+                ) : (
+                  <span className="text-xs text-slate-400 italic">Not scheduled</span>
+                )}
+                {s.meetingLink && s.status === 'Live' && (
+                  <a href={s.meetingLink} target="_blank" rel="noreferrer" className="inline-block mt-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg">
+                    Join Session
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
   </div>;
 }
 

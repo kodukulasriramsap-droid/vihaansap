@@ -66,15 +66,30 @@ export default function Courses({ onInquireCourse, inquiryCourseName, onClearInq
   // Filter courses based on selections
   // Only show published courses on the public page
   const filteredCourses = db.courses.filter(course => {
-    if (course.status && !['Published', 'Live', 'Upcoming'].includes(course.status)) return false;
+    // Add [DEBUG CourseFetch] logs for diagnostics as requested
+    console.log(`[DEBUG CourseFetch] Inspecting course: ${course.name} | ID: ${course.id} | Status: ${course.status}`);
+    // Fix: Admin CourseBuilder creates courses with status 'Active', not 'Published'.
+    // Including 'Active' here so that courses built in admin actually appear on the public page.
+    if (course.status && !['Published', 'Live', 'Upcoming', 'Active'].includes(course.status)) {
+      console.log(`[DEBUG CourseFetch] Filtered OUT course ${course.id} due to status: ${course.status}`);
+      return false;
+    }
     const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
     const matchesSearch = course.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (course.code || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (course.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (course.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (course.features && course.features.some((f: string) => f.toLowerCase().includes(searchQuery.toLowerCase())));
-    return matchesCategory && matchesSearch;
+    const isMatched = matchesCategory && matchesSearch;
+    if (!isMatched) {
+      console.log(`[DEBUG CourseFetch] Filtered OUT course ${course.id} due to category/search mismatch.`);
+    }
+    return isMatched;
   });
+
+  // Log final course stats for diagnostics
+  console.log(`[DEBUG CourseFetch] Total courses in db: ${db.courses.length} | Courses after filtering: ${filteredCourses.length}`);
+
 
   const activeCourses = filteredCourses.filter(c => c.status !== 'Upcoming' && !c.isUpcoming);
   const upcomingCourses = filteredCourses.filter(c => c.status === 'Upcoming' || c.isUpcoming);

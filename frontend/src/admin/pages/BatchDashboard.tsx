@@ -279,6 +279,30 @@ function CourseCalendarTab({ batchId }: { batchId: string }) {
   const [editForm, setEditForm] = useState<{ date: string; time: string; status: string; subTopics: import('../../types').SubTopic[] }>({ date: '', time: '', status: 'Upcoming', subTopics: [] });
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
+  // --- Custom Sessions State ---
+  const customSessions = db.batchSessions?.filter(s => s.batchId === batchId && s.sessionSource === 'custom') || [];
+  const [editingCustomSession, setEditingCustomSession] = useState<{ id: string | null; topic: string; description: string; date: string; time: string; status: 'Upcoming' | 'Live' | 'Completed'; meetingLink: string } | null>(null);
+
+  const saveCustomSession = () => {
+    if (!editingCustomSession) return;
+    const payload = {
+      batchId,
+      sessionSource: 'custom',
+      topic: editingCustomSession.topic,
+      description: editingCustomSession.description,
+      date: editingCustomSession.date,
+      time: editingCustomSession.time,
+      status: editingCustomSession.status,
+      meetingLink: editingCustomSession.meetingLink,
+    };
+    if (editingCustomSession.id) {
+      MockDB.updateItem('batchSessions', editingCustomSession.id, payload);
+    } else {
+      MockDB.addItem('batchSessions', payload);
+    }
+    setEditingCustomSession(null);
+  };
+
   const openEdit = (idx: number) => {
     const s = mergedSessions[idx];
     setEditForm({ date: s.date, time: s.time, status: s.status, subTopics: [...(s.subTopics || [])] });
@@ -491,7 +515,7 @@ function CourseCalendarTab({ batchId }: { batchId: string }) {
                   <tr className="bg-slate-50/50">
                     <td colSpan={5} className="px-4 py-3">
                       <div className="pl-12 pr-4 py-2 space-y-2 border-l-2 border-indigo-200 ml-4">
-                        {s.subTopics.map(st => (
+                        {s.subTopics.map((st: any) => (
                           <div key={st.id} className="flex items-start justify-between bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                             <div>
                               <p className={`text-sm font-bold ${st.status === 'Completed' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
@@ -535,6 +559,108 @@ function CourseCalendarTab({ batchId }: { batchId: string }) {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* --- CUSTOM SESSIONS SECTION --- */}
+      <div className="mt-12 pt-8 border-t border-slate-200 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">Additional Batch Sessions</h3>
+            <p className="text-xs text-slate-500 mt-1">Custom sessions specific to this batch (not in syllabus).</p>
+          </div>
+          <button
+            onClick={() => setEditingCustomSession({ id: null, topic: '', description: '', date: '', time: '', status: 'Upcoming', meetingLink: '' })}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Add Custom Session
+          </button>
+        </div>
+
+        {editingCustomSession && (
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+            <h4 className="text-sm font-bold text-slate-700">{editingCustomSession.id ? 'Edit' : 'New'} Custom Session</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="col-span-1 sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Topic / Title</label>
+                <input type="text" value={editingCustomSession.topic} onChange={e => setEditingCustomSession(f => ({ ...f!, topic: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Resume Review Session" />
+              </div>
+              <div className="col-span-1 sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Description (Optional)</label>
+                <input type="text" value={editingCustomSession.description} onChange={e => setEditingCustomSession(f => ({ ...f!, description: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" placeholder="Brief details about this session" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Date</label>
+                <input type="date" value={editingCustomSession.date} onChange={e => setEditingCustomSession(f => ({ ...f!, date: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Time</label>
+                <input type="time" value={editingCustomSession.time} onChange={e => setEditingCustomSession(f => ({ ...f!, time: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Status</label>
+                <select value={editingCustomSession.status} onChange={e => setEditingCustomSession(f => ({ ...f!, status: e.target.value as any }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Live">Live</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Meeting Link (Optional)</label>
+                <input type="text" value={editingCustomSession.meetingLink} onChange={e => setEditingCustomSession(f => ({ ...f!, meetingLink: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" placeholder="https://meet.google.com/..." />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setEditingCustomSession(null)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg">Cancel</button>
+              <button onClick={saveCustomSession} className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">Save Session</button>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Topic</th>
+                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Date & Time</th>
+                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {customSessions.map((s) => (
+                <tr key={s.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-bold text-slate-800">{s.topic}</p>
+                    {s.description && <p className="text-xs text-slate-500">{s.description}</p>}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {s.date ? (
+                      <>
+                        <p className="font-bold text-slate-800 text-sm">{s.date}</p>
+                        <p className="text-xs text-slate-500">{s.time}</p>
+                      </>
+                    ) : <span className="text-xs text-slate-400 italic">Not scheduled</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                      s.status === 'Live' ? 'bg-orange-50 text-orange-600' :
+                      s.status === 'Completed' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'
+                    }`}>
+                      {s.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right space-x-2">
+                    <button onClick={() => setEditingCustomSession({ ...s })} className="text-indigo-600 hover:text-indigo-800 p-1"><Edit2 className="w-4 h-4 inline" /></button>
+                    <button onClick={() => { if(window.confirm('Delete this session?')) MockDB.deleteItem('batchSessions', s.id); }} className="text-red-600 hover:text-red-800 p-1"><Trash2 className="w-4 h-4 inline" /></button>
+                  </td>
+                </tr>
+              ))}
+              {customSessions.length === 0 && (
+                <tr><td colSpan={4} className="text-center py-6 text-slate-500 text-sm italic">No custom sessions added for this batch.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

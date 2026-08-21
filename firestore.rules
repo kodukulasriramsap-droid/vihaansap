@@ -77,7 +77,13 @@ service cloud.firestore {
 
     // ─── Public collections ───────────────────────────────────────────────────
     match /courses/{document}       { allow read: if true; allow write: if admin(); }
-    match /blogs/{document}         { allow read: if true; allow write: if admin(); }
+    // Blogs: public reads. Admins have full write access.
+    // Active mentors can create new blogs and edit/delete only their own (authorId == their UID).
+    match /blogs/{document} {
+      allow read: if true;
+      allow create: if admin() || (isActiveMentor() && request.resource.data.authorId == request.auth.uid);
+      allow update, delete: if admin() || (isActiveMentor() && resource.data.authorId == request.auth.uid);
+    }
     match /faqs/{document}          { allow read: if true; allow write: if admin(); }
     match /events/{document}        { allow read: if true; allow write: if admin(); }
     match /config/{document}        { allow read: if true; allow write: if admin(); }

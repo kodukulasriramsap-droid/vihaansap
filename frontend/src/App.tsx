@@ -66,6 +66,7 @@ const MentorLayout = lazy(() => import('./mentor/MentorPortal').then(module => (
 const MentorDashboard = lazy(() => import('./mentor/MentorPortal').then(module => ({ default: module.MentorDashboard })));
 const MentorBatch = lazy(() => import('./mentor/MentorPortal').then(module => ({ default: module.MentorBatch })));
 const MentorCourses = lazy(() => import('./mentor/MentorPortal').then(module => ({ default: module.MentorCourses })));
+const MentorBlogs = lazy(() => import('./mentor/MentorBlogs').then(module => ({ default: module.MentorBlogs })));
 
 
 // Helper component to scroll window to top on route change
@@ -186,6 +187,7 @@ export default function App() {
         <Route path="/mentor" element={<MentorLayout />}>
           <Route path="dashboard" element={<MentorDashboard />} />
           <Route path="courses" element={<MentorCourses />} />
+          <Route path="blogs" element={<MentorBlogs />} />
           <Route path="batches/:batchId" element={<MentorBatch />} />
           <Route path="batches/:batchId/courses" element={<MentorCourses />} />
           <Route path="batches/:batchId/*" element={<MentorBatch />} />

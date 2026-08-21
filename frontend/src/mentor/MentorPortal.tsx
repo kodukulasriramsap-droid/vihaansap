@@ -91,6 +91,9 @@ export function MentorLayout() {
           <Link to={coursesHref} className="text-sm text-slate-300 hover:text-white flex items-center gap-1">
             <BookOpen className="w-4 h-4" />Courses
           </Link>
+          <Link to="/mentor/blogs" className="text-sm text-slate-300 hover:text-white flex items-center gap-1">
+            <BookOpen className="w-4 h-4" />Blogs
+          </Link>
           <span className="text-sm text-slate-300">{mentor.name || mentor.email}</span>
           <button
             onClick={() => void logout()}

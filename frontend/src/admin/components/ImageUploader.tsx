@@ -3,7 +3,7 @@ import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../config/firebase';
 
-export type ImageFolder = 'branding' | 'courses' | 'blogs' | 'recordings' | 'mentors' | 'students' | 'reviews';
+export type ImageFolder = 'branding' | 'courses' | 'blogs' | 'recordings' | 'mentors' | 'students' | 'reviews' | string;
 
 interface ImageUploaderProps {
   label: string;
